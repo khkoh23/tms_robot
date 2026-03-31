@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot name="tms_robot_cell" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find tms_robot_description)/urdf/tms_env.xacro"/>
+  <xacro:include filename="$(find tms_robot_description)/urdf/tms_ur.xacro"/>
+  <xacro:include filename="$(find tms_robot_description)/urdf/tms_end_effector.xacro"/> 
+
+  <xacro:arg name="ur_type" default="ur10e"/>
+  <xacro:arg name="joint_limits_parameters_file" default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml"/>
+  <xacro:arg name="kinematics_parameters_file" default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml"/>
+  <xacro:arg name="physical_parameters_file" default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml"/>
+  <xacro:arg name="visual_parameters_file" default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml"/>
+
+  <material name="dark_grey">
+     <color rgba="0.25 0.25 0.25 1"/>
+  </material>
+
+  <material name="grey">
+    <color rgba="0.5 0.5 0.5 1"/>
+  </material>
+
+  <material name="invisible">
+    <color rgba="0.9 0.9 0.9 0.1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="cobalt_blue">
+    <color rgba="0 0.25 0.76 1"/>
+  </material>
+
+  <link name="world"/>
+
+  <xacro:tms_env parent="world"/>
+
+  <xacro:tms_ur
+    parent="robot_mount"
+    ur_type="$(arg ur_type)"
+    joint_limits_parameters_file="$(arg joint_limits_parameters_file)"
+    kinematics_parameters_file="$(arg kinematics_parameters_file)"
+    physical_parameters_file="$(arg physical_parameters_file)"
+    visual_parameters_file="$(arg visual_parameters_file)"
+    >
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:tms_ur> 
+
+  <xacro:tms_end_effector 
+    ur_type="$(arg ur_type)"
+    connected_to="tool0"
+    >
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:tms_end_effector>
+
+</robot>

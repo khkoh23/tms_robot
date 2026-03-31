@@ -1,0 +1,12 @@
+# Action for the TMS robot to motion plan "ur_arm" to an offset Z distance of the TCP. 
+
+# Goal: The target pose for the tcp
+float64 distance
+
+---
+# Result:
+bool outcome
+
+---
+# Feedback:
+geometry_msgs/Pose current_pose

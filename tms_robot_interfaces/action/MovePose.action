@@ -1,0 +1,18 @@
+# Action for the TMS robot to motion plan "ur_arm" to a target pose (world frame). 
+
+# Goal: The target pose for the tcp
+float64 position_x
+float64 position_y
+float64 position_z
+float64 orientation_w
+float64 orientation_x
+float64 orientation_y
+float64 orientation_z
+
+---
+# Result:
+bool outcome
+
+---
+# Feedback:
+geometry_msgs/Pose current_pose

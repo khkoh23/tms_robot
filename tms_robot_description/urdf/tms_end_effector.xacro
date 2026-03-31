@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="https://ros.org/wiki/xacro">
+
+  <xacro:macro name="tms_end_effector" params="
+  ur_type
+  connected_to
+  *origin
+  ">
+
+    <xacro:property name="fts300s_offset" value="0.0375" />
+    <xacro:property name="d405_offset_y" value="0.060" />
+    <xacro:property name="d405_offset_z" value="0.010" />
+    <xacro:property name="uc4_offset_y" value="0.020" />
+    <xacro:property name="uc4_offset_z" value="0.035" />
+    <xacro:property name="coil_offset" value="0.075" />
+    <xacro:property name="tcp_offset" value="0.025" />
+
+    <link name="fts300s">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/fts300s.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/fts300s.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="d405">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/d405.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/d405.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="uc4">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/uc4.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="cobalt_blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/uc4.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="dummy_coil">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/dummy_coil.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/dummy_coil.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="${ur_type}_tcp"/>
+
+
+
+    <joint name="${ur_type}_${connected_to}_to_fts300s" type="fixed">
+      <parent link="${ur_type}_${connected_to}"/>
+      <child link="fts300s"/>
+      <origin xyz="0 0 ${fts300s_offset}" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="fts300s_to_d405" type="fixed">
+      <parent link="fts300s"/>
+      <child link="d405"/>
+      <origin xyz="0 ${-d405_offset_y} ${d405_offset_z}" rpy="${pi} 0 0"/>
+    </joint>
+
+    <joint name="fts300s_to_uc4" type="fixed">
+      <parent link="fts300s"/>
+      <child link="uc4"/>
+      <origin xyz="0 ${-uc4_offset_y} ${uc4_offset_z}" rpy="0 0 ${pi}"/>
+    </joint>
+
+    <joint name="fts300s_to_dummy_coil" type="fixed">
+      <parent link="fts300s"/>
+      <child link="dummy_coil"/>
+      <origin xyz="0 0 ${coil_offset}" rpy="${-pi/2} 0 0"/>
+    </joint>
+
+    <joint name="${ur_type}_tcp_joint" type="fixed">
+      <parent link="dummy_coil"/>
+      <child link="${ur_type}_tcp"/>
+      <origin xyz="0 ${-tcp_offset} 0" rpy="${pi/2} 0 0"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

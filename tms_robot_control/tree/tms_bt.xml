@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="ForceToHead">
+  <BehaviorTree ID="ForceToHead">
+    <Fallback name="ForceController">
+      <Sequence name="CheckRange">
+        <ForceHigher min="-8.0"/>
+        <ForceLower max="-3.0"/>
+        <MoveTcpZ distance="0.0"/>
+      </Sequence>
+      <Sequence name="IncreaseForce">
+        <ForceHigher min="-3.0"/>
+        <MoveTcpZ distance="0.0005"/>
+      </Sequence>
+      <Sequence name="DecreaseForce">
+        <ForceLower max="-8.0"/>
+        <MoveTcpZ distance="-0.0005"/>
+      </Sequence>
+    </Fallback>
+  </BehaviorTree>
+
+  <BehaviorTree ID="tms_bt">
+    <Sequence>
+      <GetImage/>
+      <GetTargetPose/>
+      <SubTree ID="ForceToHead"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Condition ID="ForceHigher"
+               editable="true">
+      <input_port name="min"/>
+    </Condition>
+    <Condition ID="ForceLower"
+               editable="true">
+      <input_port name="max"/>
+    </Condition>
+    <Action ID="GetImage"
+            editable="true"/>
+    <Action ID="GetTargetPose"
+            editable="true"/>
+    <Action ID="MoveTcpZ"
+            editable="true">
+      <input_port name="distance">Distance in meter</input_port>
+    </Action>
+  </TreeNodesModel>
+
+</root>
