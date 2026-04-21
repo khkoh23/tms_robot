@@ -10,8 +10,11 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/ExecuteTask.action"
   "action/MovePose.action" 
   "action/MoveTcpZ.action"
+  "msg/BtNodeStatus.msg"
+  "msg/BtState.msg"  
   DEPENDENCIES geometry_msgs
 )
 

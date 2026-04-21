@@ -1,0 +1,11 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="PatrolTask">
+    <Sequence name="patrol_seq">
+      <ReportStatus name="patrol_start" message="Patrol started"/>
+      <Wait name="go_wp_1" msec="1000"/>
+      <Wait name="go_wp_2" msec="1200"/>
+      <Wait name="go_wp_3" msec="1000"/>
+      <ReportStatus name="patrol_done" message="Patrol complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

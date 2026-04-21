@@ -1,0 +1,10 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="InspectTask">
+    <Sequence name="inspect_seq">
+      <ReportStatus name="inspect_start" message="Starting inspection task"/>
+      <Wait name="move_to_target" msec="1500"/>
+      <Wait name="capture_data" msec="2000"/>
+      <ReportStatus name="inspect_done" message="Inspection complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

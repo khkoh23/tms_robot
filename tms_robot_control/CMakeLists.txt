@@ -6,6 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -37,9 +38,26 @@ ament_target_dependencies(tms_robot_executor
   rclcpp_action
   tms_robot_interfaces)
 
+add_executable(robot_task_executor 
+  src/main.cpp
+  src/task_executor_node.cpp
+)
+target_include_directories(robot_task_executor PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(robot_task_executor
+  rclcpp
+  rclcpp_action
+  ament_index_cpp
+  behaviortree_cpp
+  tms_robot_interfaces
+)
+
 install(TARGETS 
   move_tcp_z_server
   tms_robot_executor
+  robot_task_executor
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY

@@ -1,0 +1,9 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="MoveArmHomeTask">
+    <Sequence name="move_arm_home_seq">
+      <ReportStatus name="arm_home_start" message="Moving arm to home"/>
+      <MoveArmNamedTarget name="move_home" target="home"/>
+      <ReportStatus name="arm_home_done" message="Arm moved to home"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
