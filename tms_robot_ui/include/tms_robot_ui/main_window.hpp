@@ -1,9 +1,24 @@
-#pragma once
+#ifndef TMS_ROBOT_UI_MAIN_WINDOW_HPP
+#define TMS_ROBOT_UI_MAIN_WINDOW_HPP
 
 #include <QMainWindow>
+#include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QTreeWidget>
+#include <QSplitter>
+#include <QTimer>
+#include <QDomDocument>
+#include <QList>
 #include <QMap>
+#include <QString>
+#include <QFile>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
+#include "tms_robot_ui/ros_bridge.hpp"
+#include "tms_robot_ui/rviz_widget.hpp"
+#include "tms_robot_ui/camera_view_widget.hpp"
 
 class QLabel;
 class QPushButton;
@@ -46,6 +61,7 @@ private:
   rclcpp::Node::SharedPtr node_;
   RosBridge * ros_bridge_;
   RvizWidget * rviz_widget_;
+  CameraViewWidget *camera_view_widget_;
   QTimer * ros_spin_timer_;
   QLabel * state_label_;
   QLabel * active_node_label_;
@@ -56,3 +72,5 @@ private:
   QTreeWidget * bt_tree_widget_;
   QMap<QString, QTreeWidgetItem *> node_items_;
 };
+
+#endif // TMS_ROBOT_UI_MAIN_WINDOW_HPP

@@ -1,31 +1,19 @@
 #include "tms_robot_ui/main_window.hpp"
-#include "tms_robot_ui/ros_bridge.hpp"
-#include "tms_robot_ui/rviz_widget.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <QBrush>
-#include <QComboBox>
 #include <QDateTime>
-#include <QDomDocument>
 #include <QHeaderView>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
-#include <QSplitter>
-#include <QTextEdit>
-#include <QTimer>
-#include <QTreeWidget>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <QFile>
-
-#include <rclcpp/rclcpp.hpp>
 
 MainWindow::MainWindow(rclcpp::Node::SharedPtr node, QWidget * parent)
 : QMainWindow(parent),
   node_(node),
   ros_bridge_(new RosBridge(node, this)),
   rviz_widget_(nullptr),
+  camera_view_widget_(nullptr),
   ros_spin_timer_(nullptr)
 {
   buildUi();
@@ -72,9 +60,14 @@ void MainWindow::buildUi() {
   left_layout->addWidget(bt_tree_widget_, 1);
   left_layout->addWidget(new QLabel("<b>Log</b>", left));
   left_layout->addWidget(log_text_, 1);
-  rviz_widget_ = new RvizWidget(splitter);
+  auto * right_splitter = new QSplitter(Qt::Vertical, splitter);
+  rviz_widget_ = new RvizWidget(right_splitter);
+  camera_view_widget_ = new CameraViewWidget(node_, right_splitter);
+  camera_view_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  right_splitter->setStretchFactor(0, 5); //50%
+  right_splitter->setStretchFactor(1, 5); //50%
   splitter->addWidget(left);
-  splitter->addWidget(rviz_widget_);
+  splitter->addWidget(right_splitter);
   splitter->setStretchFactor(0, 0);
   splitter->setStretchFactor(1, 1);
   // splitter->setSizes({600, 100});
