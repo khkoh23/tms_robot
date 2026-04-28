@@ -20,7 +20,7 @@ CameraViewWidget::CameraViewWidget(rclcpp::Node::SharedPtr node, QWidget *parent
     
     // Initialize ROS subscription (Topic will be set later or default)
     // We set a default topic here, but you can change it in MainWindow
-    setTopic("/camera/ai_result");
+    setTopic("/camera/ai_results");
 }
 
 CameraViewWidget::~CameraViewWidget()
