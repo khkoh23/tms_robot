@@ -8,12 +8,18 @@
   ">
 
     <xacro:property name="fts300s_offset" value="0.0375" />
-    <xacro:property name="d405_offset_y" value="0.060" />
-    <xacro:property name="d405_offset_z" value="0.010" />
-    <xacro:property name="uc4_offset_y" value="0.020" />
-    <xacro:property name="uc4_offset_z" value="0.035" />
-    <xacro:property name="coil_offset" value="0.075" />
-    <xacro:property name="tcp_offset" value="0.025" />
+    <xacro:property name="qcrobot_offset" value="-0.0001" />
+    <xacro:property name="qctool_offset" value="0.0006" />
+    <xacro:property name="icmounting_offset_z" value="0.1334" />
+    <xacro:property name="icmounting_offset_y" value="0.005" />
+    <xacro:property name="d405_offset_z" value="0.11783" />
+    <xacro:property name="d405_offset_y" value="-0.09915" />
+    <xacro:property name="d405_tilt" value="-0.66584311" /> <!--38.15deg-->
+    <xacro:property name="uc4_offset_z" value="0.07979" />
+    <xacro:property name="uc4_offset_y" value="-0.03937" />
+    <xacro:property name="uc4_tilt" value="0.349066" /> <!--20deg-->
+    <xacro:property name="iccoil_offset" value="0" />
+    <xacro:property name="tcp_offset" value="0.1534" /> 
 
     <link name="fts300s">
       <visual>
@@ -26,6 +32,54 @@
       <collision>
         <geometry>
           <mesh filename="package://tms_robot_description/meshes/fts300s.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="qcrobot">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/qc_robot.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/qc_robot.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="qctool">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/qc_tool.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/qc_tool.STL" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>
+
+    <link name="icmounting">
+      <visual>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/ic_mounting.STL" scale="0.001 0.001 0.001" />
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://tms_robot_description/meshes/ic_mounting.STL" scale="0.001 0.001 0.001"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
       </collision>
@@ -63,21 +117,21 @@
       </collision>
     </link>
 
-    <link name="dummy_coil">
+    <link name="iccoil">
       <visual>
         <geometry>
-          <mesh filename="package://tms_robot_description/meshes/dummy_coil.STL" scale="0.001 0.001 0.001" />
+          <mesh filename="package://tms_robot_description/meshes/ic_coil.STL" scale="0.001 0.001 0.001" />
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <material name="dark_grey"/>
       </visual>
       <collision>
         <geometry>
-          <mesh filename="package://tms_robot_description/meshes/dummy_coil.STL" scale="0.001 0.001 0.001"/>
+          <mesh filename="package://tms_robot_description/meshes/ic_coil.STL" scale="0.001 0.001 0.001"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
       </collision>
-    </link>
+    </link> 
 
     <link name="${ur_type}_tcp"/>
 
@@ -89,28 +143,46 @@
       <origin xyz="0 0 ${fts300s_offset}" rpy="0 0 0"/>
     </joint>
 
+    <joint name="fts300s_to_qcrobot" type="fixed">
+      <parent link="fts300s"/>
+      <child link="qcrobot"/>
+      <origin xyz="0 0 ${qcrobot_offset}" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
+    <joint name="fts300s_to_qctool" type="fixed">
+      <parent link="fts300s"/>
+      <child link="qctool"/>
+      <origin xyz="0 0 ${qctool_offset}" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
+    <joint name="fts300s_to_icmounting" type="fixed">
+      <parent link="fts300s"/>
+      <child link="icmounting"/>
+      <origin xyz="0 ${icmounting_offset_y} ${icmounting_offset_z}" rpy="${-pi/2} 0 ${pi/2}"/>
+    </joint>
+
     <joint name="fts300s_to_d405" type="fixed">
       <parent link="fts300s"/>
       <child link="d405"/>
-      <origin xyz="0 ${-d405_offset_y} ${d405_offset_z}" rpy="${pi} 0 0"/>
+      <origin xyz="0 ${d405_offset_y} ${d405_offset_z}" rpy="${d405_tilt} 0 0"/>
     </joint>
 
     <joint name="fts300s_to_uc4" type="fixed">
       <parent link="fts300s"/>
       <child link="uc4"/>
-      <origin xyz="0 ${-uc4_offset_y} ${uc4_offset_z}" rpy="0 0 ${pi}"/>
+      <origin xyz="0 ${uc4_offset_y} ${uc4_offset_z}" rpy="${uc4_tilt} 0 ${pi}"/>
     </joint>
 
-    <joint name="fts300s_to_dummy_coil" type="fixed">
-      <parent link="fts300s"/>
-      <child link="dummy_coil"/>
-      <origin xyz="0 0 ${coil_offset}" rpy="${-pi/2} 0 0"/>
+    <joint name="icmounting_to_iccoil" type="fixed">
+      <parent link="icmounting"/>
+      <child link="iccoil"/>
+      <origin xyz="0 ${iccoil_offset} 0" rpy="0 0 0"/>
     </joint>
 
     <joint name="${ur_type}_tcp_joint" type="fixed">
-      <parent link="dummy_coil"/>
+      <parent link="fts300s"/>
       <child link="${ur_type}_tcp"/>
-      <origin xyz="0 ${-tcp_offset} 0" rpy="${pi/2} 0 0"/>
+      <origin xyz="0 0 ${tcp_offset}" rpy="0 0 0"/>
     </joint>
 
   </xacro:macro>

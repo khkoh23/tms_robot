@@ -3,22 +3,23 @@
 
   <xacro:macro name="tms_env" params="parent">
 
-    <xacro:property name="table_width" value="0.9" />
-    <xacro:property name="table_height" value="0.85" />
-    <xacro:property name="table_dummy_head_offset" value="0.3" />
-    <xacro:property name="table_ur_offset" value="0.3" />
+    <xacro:property name="table_width" value="0.620" /> <!-- y direction -->
+    <xacro:property name="table_length" value="0.730" /> <!-- x direction -->
+    <xacro:property name="table_height" value="0.710" />
+    <xacro:property name="table_dummy_head_offset" value="0.265" /> <!-- to be determined -->
+    <xacro:property name="table_ur_offset" value="-0.2025" />
 
     <link name="table">
       <visual>
         <geometry>
-          <box size="${table_width} ${table_width} ${table_height}"/>
+          <box size="${table_length} ${table_width} ${table_height}"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <material name="dark_grey"/>
       </visual>
       <collision>
         <geometry>
-          <box size="${table_width} ${table_width} ${table_height}"/>
+          <box size="${table_length} ${table_width} ${table_height}"/>
         </geometry>
         <origin rpy="0 0 0" xyz="0 0 0"/>
       </collision>
@@ -53,7 +54,7 @@
     <joint name="table_to_robot_mount" type="fixed">
       <parent link="table"/>
       <child link="robot_mount"/>
-      <origin xyz="${-table_ur_offset} 0 ${table_height/2}" rpy="0 0 ${pi}" />
+      <origin xyz="${table_ur_offset} 0 ${table_height/2}" rpy="0 0 ${pi}" />
     </joint>
 
     <joint name="table_to_dummy_head" type="fixed">
