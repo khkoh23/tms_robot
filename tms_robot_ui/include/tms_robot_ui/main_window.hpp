@@ -30,6 +30,10 @@ class QTimer;
 class RosBridge;
 class RvizWidget;
 
+namespace Ui {
+class MainWindow;
+}
+
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
@@ -59,6 +63,7 @@ private:
   QTreeWidgetItem * buildTreeItemFromDom(const class QDomElement & element);
   void setItemColor(QTreeWidgetItem * item, const QString & status);
   rclcpp::Node::SharedPtr node_;
+  std::unique_ptr<Ui::MainWindow> ui_;
   RosBridge * ros_bridge_;
   RvizWidget * rviz_widget_;
   CameraViewWidget *camera_view_widget_;

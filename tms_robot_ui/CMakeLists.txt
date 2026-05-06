@@ -26,12 +26,17 @@ find_package(tms_robot_interfaces REQUIRED)
 
 include_directories(include)
 
+set(CMAKE_AUTOUIC_SEARCH_PATHS
+  ${CMAKE_CURRENT_SOURCE_DIR}/resource
+)
+
 add_executable(tms_robot_ui
   src/main.cpp
   src/main_window.cpp
   src/ros_bridge.cpp
   src/rviz_widget.cpp
   src/camera_view_widget.cpp 
+  resource/main_window.ui
   include/tms_robot_ui/main_window.hpp
   include/tms_robot_ui/ros_bridge.hpp
   include/tms_robot_ui/rviz_widget.hpp
@@ -70,6 +75,10 @@ install(TARGETS tms_robot_ui
 
 install(DIRECTORY include/
   DESTINATION include/
+)
+
+install(DIRECTORY resource/
+  DESTINATION share/${PROJECT_NAME}/resource
 )
 
 ament_package()
