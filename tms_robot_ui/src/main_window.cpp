@@ -33,8 +33,11 @@ MainWindow::~MainWindow() = default;
 void MainWindow::buildUi() {
   ui_->setupUi(this);
   task_selector_ = ui_->task_selector;
+  zero_button_ = ui_->zero_button;
   start_button_ = ui_->start_button;
   cancel_button_ = ui_->cancel_button;
+  force_label_ = ui_->force_label;
+  distance_label_ = ui_->distance_label;
   state_label_ = ui_->state_label;
   active_node_label_ = ui_->active_node_label;
   bt_tree_widget_ = ui_->bt_tree_widget;
@@ -65,12 +68,15 @@ void MainWindow::buildUi() {
 }
 
 void MainWindow::connectSignals() {
+  connect(zero_button_, &QPushButton::clicked, this, &MainWindow::onZeroClicked);
   connect(start_button_, &QPushButton::clicked, this, &MainWindow::onStartClicked);
   connect(cancel_button_, &QPushButton::clicked, this, &MainWindow::onCancelClicked);
   connect(task_selector_, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int) { loadSelectedTree(); });
   connect(ros_bridge_, &RosBridge::taskStateUpdated, this, &MainWindow::onTaskStateUpdated); 
   connect(ros_bridge_, &RosBridge::btNodeStatusUpdated, this, &MainWindow::onBtNodeStatusUpdated);
   connect(ros_bridge_, &RosBridge::logMessage, this, &MainWindow::onLogMessage);
+  connect(ros_bridge_, &RosBridge::forceUpdated, this, &MainWindow::onForceUpdated);
+  connect(ros_bridge_, &RosBridge::distanceUpdated, this, &MainWindow::onDistanceUpdated);
 }
 
 QString MainWindow::selectedTaskName() const {
@@ -90,6 +96,10 @@ QString MainWindow::selectedTreePath() const {
 
 void MainWindow::loadSelectedTree() {
   loadTreeIntoWidget(selectedTreePath());
+}
+
+void MainWindow::onZeroClicked() {
+  ros_bridge_->zeroFTS();
 }
 
 void MainWindow::onStartClicked() {
@@ -125,6 +135,14 @@ void MainWindow::onBtNodeStatusUpdated(const QString & node_name,
 void MainWindow::onLogMessage(const QString & msg) {
   const auto now = QDateTime::currentDateTime().toString("hh:mm:ss");
   log_text_->append(QString("[%1] %2").arg(now, msg));
+}
+
+void MainWindow::onForceUpdated(const QString & msg) {
+  force_label_->setText("Force sensor Z: " + msg + " N");
+}
+
+void MainWindow::onDistanceUpdated(const QString & msg) {
+  distance_label_->setText("Distance sensor: " + msg + " mm");
 }
 
 void MainWindow::loadTreeIntoWidget(const QString & xml_path) {

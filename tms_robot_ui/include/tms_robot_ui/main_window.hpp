@@ -42,6 +42,7 @@ public:
   ~MainWindow();
 
 private slots:
+  void onZeroClicked();
   void onStartClicked();
   void onCancelClicked();
   void onTaskStateUpdated(const QString & task_name,
@@ -52,6 +53,8 @@ private slots:
                              const QString & node_type,
                              const QString & status);
   void onLogMessage(const QString & msg);
+  void onForceUpdated(const QString & msg);
+  void onDistanceUpdated(const QString & msg);
 
 private:
   void buildUi();
@@ -68,9 +71,12 @@ private:
   RvizWidget * rviz_widget_;
   CameraViewWidget *camera_view_widget_;
   QTimer * ros_spin_timer_;
+  QLabel * force_label_;
+  QLabel * distance_label_;
   QLabel * state_label_;
   QLabel * active_node_label_;
   QComboBox * task_selector_;
+  QPushButton * zero_button_;
   QPushButton * start_button_;
   QPushButton * cancel_button_;
   QTextEdit * log_text_;

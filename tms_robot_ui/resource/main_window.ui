@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1370</width>
+    <height>872</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Robot Console UI</string>
   </property>
@@ -64,6 +72,13 @@
            <widget class="QWidget" name="task_controls_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_4">
              <item>
+              <widget class="QPushButton" name="zero_button">
+               <property name="text">
+                <string>Zero FTS</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QComboBox" name="task_selector"/>
              </item>
              <item>
@@ -86,6 +101,20 @@
           <item>
            <widget class="QWidget" name="task_status_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
+              <widget class="QLabel" name="force_label">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Force sensor Z: -&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="distance_label">
+               <property name="text">
+                <string>Distance sensor: -</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QLabel" name="state_label">
                <property name="text">
@@ -141,7 +170,16 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1370</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
