@@ -124,6 +124,20 @@ private:
   std::chrono::steady_clock::time_point start_time_;
 };
 
+class CheckSystemReadyNode : public BT::ConditionNode {
+public:
+  CheckSystemReadyNode(const std::string & name, const BT::NodeConfig & config)
+  : BT::ConditionNode(name, config) {
+  }
+  static BT::PortsList providedPorts() { 
+    return {}; 
+  }
+  BT::NodeStatus tick() override {
+    // Placeholder — later: hardware, safety, state freshness checks
+    return BT::NodeStatus::SUCCESS;
+  }
+};
+
 }  // namespace
 
 TaskExecutorNode::TaskExecutorNode() 
@@ -156,11 +170,16 @@ void TaskExecutorNode::register_bt_nodes() {
           RCLCPP_INFO(this->get_logger(), "%s", msg.c_str());
         });
     });
+  factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
 }
 
 rclcpp_action::GoalResponse TaskExecutorNode::handle_goal(
-  const rclcpp_action::GoalUUID &,
-  std::shared_ptr<const ExecuteTask::Goal> goal) {
+const rclcpp_action::GoalUUID &, 
+std::shared_ptr<const ExecuteTask::Goal> goal) {
+  if (task_running_) {
+    RCLCPP_WARN(get_logger(), "Rejecting task '%s': another task is already running", goal->task_name.c_str());
+    return rclcpp_action::GoalResponse::REJECT;
+  }
   RCLCPP_INFO(get_logger(), "Received goal for task: %s", goal->task_name.c_str());
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
@@ -176,24 +195,29 @@ void TaskExecutorNode::handle_accepted(const std::shared_ptr<GoalHandleExecuteTa
 }
 
 void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask> goal_handle) {
+  task_running_ = true;
   const auto goal = goal_handle->get_goal();
   cancel_requested_ = false;
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
   if (!load_tree_for_task(goal->task_name)) {
-    publish_task_state(goal->task_name, "FAILED", "", "Failed to load tree");
+    task_running_ = false;
+    set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load tree");
     result->success = false;
     result->message = "Failed to load tree";
     goal_handle->abort(result);
     return;
   }
-  publish_task_state(goal->task_name, "RUNNING", "", "Task started");
+  set_lifecycle_state(TaskLifecycleState::PRECHECK, goal->task_name, "", "Checking task prerequisites");
+  std::this_thread::sleep_for(50ms);
+  set_lifecycle_state(TaskLifecycleState::RUNNING, goal->task_name, "", "Task started");
   publish_log("Task started: " + goal->task_name);
   while (rclcpp::ok()) {
     if (cancel_requested_) {
+      task_running_ = false;
       tree_.haltTree();
       publish_tree_status();
-      publish_task_state(goal->task_name, "CANCELED", "", "Task canceled");
+      set_lifecycle_state(TaskLifecycleState::CANCELED, goal->task_name, "", "Task canceled");
       publish_log("Task canceled: " + goal->task_name);
       result->success = false;
       result->message = "Canceled";
@@ -220,7 +244,8 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     goal_handle->publish_feedback(feedback);
     publish_task_state(goal->task_name, state_string, active_node, "Executing");
     if (status == BT::NodeStatus::SUCCESS) {
-      publish_task_state(goal->task_name, "SUCCESS", "", "Task succeeded");
+      task_running_ = false;
+      set_lifecycle_state(TaskLifecycleState::SUCCESS, goal->task_name, "", "Task succeeded");
       publish_log("Task succeeded: " + goal->task_name);
       result->success = true;
       result->message = "Task succeeded";
@@ -228,7 +253,8 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
       return;
     }
     if (status == BT::NodeStatus::FAILURE) {
-      publish_task_state(goal->task_name, "FAILURE", active_node, "Task failed");
+      task_running_ = false;
+      set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, active_node, "Task failed");
       publish_log("Task failed: " + goal->task_name);
       result->success = false;
       result->message = "Task failed";
@@ -237,6 +263,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     }
     std::this_thread::sleep_for(50ms);
   }
+  task_running_ = false;
 }
 
 bool TaskExecutorNode::load_tree_for_task(const std::string & task_name) {
@@ -334,4 +361,28 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
     return share_dir + "/tree/move_arm_home.xml";
   }
   return "";
+}
+
+std::string TaskExecutorNode::lifecycle_state_to_string(TaskLifecycleState state) const {
+  switch (state) {
+    case TaskLifecycleState::IDLE: return "IDLE";
+    case TaskLifecycleState::PRECHECK: return "PRECHECK";
+    case TaskLifecycleState::RUNNING: return "RUNNING";
+    case TaskLifecycleState::CANCELING: return "CANCELING";
+    case TaskLifecycleState::CANCELED: return "CANCELED";
+    case TaskLifecycleState::SUCCESS: return "SUCCESS";
+    case TaskLifecycleState::FAILURE: return "FAILURE";
+    case TaskLifecycleState::FAULT: return "FAULT";
+    default: return "UNKNOWN";
+  }
+}
+
+void TaskExecutorNode::set_lifecycle_state(TaskLifecycleState state, 
+const std::string & task_name, 
+const std::string & active_node, 
+const std::string & message) {
+  lifecycle_state_ = state;
+  publish_task_state(task_name,
+  lifecycle_state_to_string(state), 
+  active_node, message);
 }

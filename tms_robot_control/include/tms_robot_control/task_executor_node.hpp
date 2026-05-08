@@ -20,6 +20,15 @@ public:
   using GoalHandleExecuteTask = rclcpp_action::ServerGoalHandle<ExecuteTask>;
   TaskExecutorNode();
 private:
+  enum class TaskLifecycleState {
+    IDLE, 
+    PRECHECK, 
+    RUNNING, 
+    CANCELING, 
+    CANCELED, 
+    SUCCESS, 
+    FAILURE, 
+    FAULT};
   void register_bt_nodes();
   rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteTask::Goal> goal);
   rclcpp_action::CancelResponse handle_cancel(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
@@ -44,4 +53,11 @@ private:
   BT::Tree tree_;
   std::unordered_map<std::string, std::string> last_status_;
   std::atomic<bool> cancel_requested_;
+  std::atomic<bool> task_running_{false};
+  TaskLifecycleState lifecycle_state_{TaskLifecycleState::IDLE};
+  std::string lifecycle_state_to_string(TaskLifecycleState state) const;
+  void set_lifecycle_state(TaskLifecycleState state, 
+    const std::string & task_name, 
+    const std::string & active_node, 
+    const std::string & message);
 };
