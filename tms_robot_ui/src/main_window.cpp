@@ -9,16 +9,14 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-MainWindow::MainWindow(rclcpp::Node::SharedPtr node, QWidget * parent)
-: QMainWindow(parent),
-  node_(node),
-  ui_(std::make_unique<Ui::MainWindow>()),
-  ros_bridge_(new RosBridge(node, this)),
-  rviz_widget_(nullptr),
-  camera_view_widget_(nullptr),
-  ros_spin_timer_(nullptr)
-{
-  buildUi();
+MainWindow::MainWindow(rclcpp::Node::SharedPtr node, QWidget * parent) 
+: QMainWindow(parent), node_(node), 
+ui_(std::make_unique<Ui::MainWindow>()), 
+ros_bridge_(new RosBridge(node, this)), 
+rviz_widget_(nullptr), 
+camera_view_widget_(nullptr), 
+ros_spin_timer_(nullptr) { 
+  buildUi(); 
   connectSignals();
   loadSelectedTree();
   ros_spin_timer_ = new QTimer(this);
@@ -110,26 +108,24 @@ void MainWindow::onCancelClicked() {
   ros_bridge_->cancelTask();
 }
 
-void MainWindow::onTaskStateUpdated(const QString &,
-                                    const QString & overall_state,
-                                    const QString & active_node,
-                                    const QString & message) {
-  state_label_->setText("State: " + overall_state);
+void MainWindow::onTaskStateUpdated(const QString &, 
+const QString & overall_state, 
+const QString & active_node, 
+const QString & message) { 
+  Q_UNUSED(message);
+  state_label_->setText("State: " + overall_state); 
   active_node_label_->setText("Active Node: " + active_node);
-  if (!message.isEmpty()) {
-    onLogMessage(message);
-  }
 }
 
-void MainWindow::onBtNodeStatusUpdated(const QString & node_name,
-                                       const QString &,
-                                       const QString & status) {
-  if (!node_items_.contains(node_name)) {
-    return;
-  }
+void MainWindow::onBtNodeStatusUpdated(const QString & node_name, 
+const QString &, 
+const QString & status) { 
+  if (!node_items_.contains(node_name)) { 
+    return; 
+  } 
   auto * item = node_items_[node_name];
-  item->setText(1, status);
-  setItemColor(item, status);
+  item->setText(1, status); 
+  setItemColor(item, status); 
 }
 
 void MainWindow::onLogMessage(const QString & msg) {

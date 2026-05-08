@@ -31,31 +31,28 @@ class RosBridge;
 class RvizWidget;
 
 namespace Ui {
-class MainWindow;
+  class MainWindow;
 }
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
-
 public:
   explicit MainWindow(rclcpp::Node::SharedPtr node, QWidget * parent = nullptr);
   ~MainWindow();
-
 private slots:
   void onZeroClicked();
   void onStartClicked();
   void onCancelClicked();
-  void onTaskStateUpdated(const QString & task_name,
-                          const QString & overall_state,
-                          const QString & active_node,
-                          const QString & message);
-  void onBtNodeStatusUpdated(const QString & node_name,
-                             const QString & node_type,
-                             const QString & status);
+  void onTaskStateUpdated(const QString & task_name, 
+    const QString & overall_state, 
+    const QString & active_node, 
+    const QString & message);
+  void onBtNodeStatusUpdated(const QString & node_name, 
+    const QString & node_type, 
+    const QString & status);
   void onLogMessage(const QString & msg);
   void onForceUpdated(const QString & msg);
   void onDistanceUpdated(const QString & msg);
-
 private:
   void buildUi();
   void connectSignals();

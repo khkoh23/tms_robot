@@ -22,6 +22,10 @@ RosBridge::RosBridge(rclcpp::Node::SharedPtr node, QObject * parent) : QObject(p
         QString::fromStdString(msg->active_node),
         QString::fromStdString(msg->message));
     });
+  bt_log_sub_ = node_->create_subscription<std_msgs::msg::String>(
+    "bt_log", 10, [this](std_msgs::msg::String::SharedPtr msg) {
+      emit logMessage(QString::fromStdString(msg->data));
+    });
   force_sub_ = node_->create_subscription<geometry_msgs::msg::WrenchStamped>(
     "robotiq_force_torque_sensor_broadcaster/wrench", 10, [this](geometry_msgs::msg::WrenchStamped::SharedPtr msg) {
       emit forceUpdated(

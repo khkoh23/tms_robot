@@ -10,17 +10,13 @@
 
 class RvizWidget : public QWidget {
   Q_OBJECT
-
 public:
   explicit RvizWidget(QWidget * parent = nullptr);
   ~RvizWidget() override = default;
-
 protected:
   void showEvent(QShowEvent * event) override;
-
 private Q_SLOTS:
   void initialize();
-
 private:
   bool initialized_{false};
   rviz_common::VisualizationFrame * frame_{nullptr};
