@@ -1,13 +1,25 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="MoveArmReadyTask">
     <Sequence name="move_arm_ready_seq">
-      <CheckSystemReady name="check_system_ready"/>
-      <ReportStatus name="arm_ready_start" message="Moving arm to ready position"/>
+      <CheckSystemReady
+        name="check_system_ready"
+        planning_group="ur_arm"
+        target="ready"/>
+      <ReportStatus
+        name="arm_ready_start"
+        message="Moving arm to ready position"/>
       <MoveArmNamedTarget
         name="move_ready"
         target="ready"
         planning_group="ur_arm"/>
-      <ReportStatus name="arm_ready_done" message="Arm moved to ready position"/>
+      <VerifyNamedTargetReached
+        name="verify_ready"
+        target="ready"
+        planning_group="ur_arm"
+        tolerance="0.02"/>
+      <ReportStatus
+        name="arm_ready_done"
+        message="Arm moved to ready position"/>
     </Sequence>
   </BehaviorTree>
 </root>

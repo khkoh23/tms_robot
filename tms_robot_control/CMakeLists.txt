@@ -43,6 +43,7 @@ set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/report_status.cpp
+  src/bt_nodes/verify_named_target_reached.cpp
 )
 
 add_executable(robot_task_executor 

@@ -27,7 +27,13 @@ def generate_launch_description():
             package='tms_robot_control',
             executable='robot_task_executor',
             name='robot_task_executor',
-            output='screen'
+            output='screen',
+            parameters=[
+                moveit_config.robot_description,
+                moveit_config.robot_description_semantic,
+                moveit_config.robot_description_kinematics,
+                moveit_config.planning_pipelines,
+            ]
         ),
 
         Node(
