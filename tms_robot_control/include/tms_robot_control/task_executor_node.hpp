@@ -14,6 +14,8 @@
 #include "tms_robot_interfaces/msg/bt_node_status.hpp"
 #include "tms_robot_interfaces/msg/bt_state.hpp"
 
+class MoveItContext;
+
 class TaskExecutorNode : public rclcpp::Node {
 public:
   using ExecuteTask = tms_robot_interfaces::action::ExecuteTask;
@@ -27,7 +29,7 @@ private:
   void register_bt_nodes();
   rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const ExecuteTask::Goal> goal);
   rclcpp_action::CancelResponse handle_cancel(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
-  void handle_accepted(const std::shared_ptr<GoalHandleExecuteTask> goal_handle); 
+  void handle_accepted(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   void execute_goal(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   bool load_tree_for_task(const std::string & task_name);
   void publish_tree_status();
@@ -48,4 +50,5 @@ private:
   std::atomic<bool> cancel_requested_{false};
   std::atomic<bool> task_running_{false};
   TaskLifecycleState lifecycle_state_{TaskLifecycleState::IDLE};
+  std::shared_ptr<MoveItContext> moveit_context_;
 };

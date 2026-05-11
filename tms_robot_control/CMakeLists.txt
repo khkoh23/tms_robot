@@ -10,6 +10,7 @@ find_package(ament_index_cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 # find_package(Eigen3 REQUIRED)
 # find_package(geometry_msgs REQUIRED)
+find_package(moveit_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
@@ -39,18 +40,25 @@ include_directories(include)
 #   rclcpp_action
 #   tms_robot_interfaces)
 
+set(MOVEIT_HELPER_SOURCES
+  src/moveit/moveit_context.cpp
+)
+
 set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/report_status.cpp
   src/bt_nodes/verify_named_target_reached.cpp
+  src/bt_nodes/wait_node.cpp
 )
 
 add_executable(robot_task_executor 
   src/main.cpp
   src/task_executor_node.cpp
   ${BT_NODE_SOURCES}
+  ${MOVEIT_HELPER_SOURCES}
 )
+
 target_include_directories(robot_task_executor PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -58,6 +66,7 @@ target_include_directories(robot_task_executor PUBLIC
 ament_target_dependencies(robot_task_executor
   ament_index_cpp
   behaviortree_cpp
+  moveit_msgs
   moveit_ros_planning_interface
   rclcpp
   rclcpp_action

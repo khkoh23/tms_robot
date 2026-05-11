@@ -10,61 +10,12 @@
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
+#include "tms_robot_control/bt_nodes/wait_node.hpp"
+#include "tms_robot_control/moveit/moveit_context.hpp"
 
 using namespace std::chrono_literals;
 
 namespace {
-
-bool is_cancel_requested_from_blackboard(const BT::NodeConfig & config) {
-  if (!config.blackboard) {
-    return false;
-  }
-  try {
-    auto * cancel_flag = config.blackboard->get<std::atomic<bool> *>("cancel_requested");
-    return cancel_flag && cancel_flag->load();
-  } 
-  catch (const std::exception &) {
-    return false;
-  }
-}
-
-class WaitNode : public BT::StatefulActionNode {
-public:
-  WaitNode(const std::string & name, const BT::NodeConfig & config) 
-  : BT::StatefulActionNode(name, config), duration_ms_(1000) {}
-  static BT::PortsList providedPorts() {
-    return {
-      BT::InputPort<int>("msec")
-    };
-  }
-  BT::NodeStatus onStart() override {
-    if (is_cancel_requested_from_blackboard(config())) {
-      return BT::NodeStatus::FAILURE;
-    }
-    auto msec = getInput<int>("msec");
-    if (msec) {
-      duration_ms_ = msec.value();
-    }
-    start_time_ = std::chrono::steady_clock::now();
-    return BT::NodeStatus::RUNNING;
-  }
-  BT::NodeStatus onRunning() override {
-    if (is_cancel_requested_from_blackboard(config())) {
-      return BT::NodeStatus::FAILURE;
-    }
-    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_).count();
-    if (elapsed >= duration_ms_) {
-      return BT::NodeStatus::SUCCESS;
-    }
-    return BT::NodeStatus::RUNNING;
-  }
-  void onHalted() override {
-  }
-
-private:
-  int duration_ms_;
-  std::chrono::steady_clock::time_point start_time_;
-};
 
 class TaskRunningGuard {
 public:
@@ -207,7 +158,11 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name) {
     auto blackboard = BT::Blackboard::create();
     blackboard->set<std::atomic<bool> *>("cancel_requested", &cancel_requested_);
     blackboard->set<rclcpp::Node::SharedPtr>("ros_node", this->shared_from_this());
-    tree_ = factory_.createTreeFromText(buffer.str(), blackboard);
+    if (!moveit_context_) {
+      moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
+    }
+    blackboard->set<std::shared_ptr<MoveItContext>>("moveit_context", moveit_context_);
+    tree_ = factory_.createTreeFromText(buffer.str(), blackboard);  
   } 
   catch (const std::exception & e) {
     RCLCPP_ERROR(get_logger(), "Failed to create tree: %s", e.what());

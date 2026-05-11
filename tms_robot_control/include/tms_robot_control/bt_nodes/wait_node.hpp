@@ -1,17 +1,18 @@
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <behaviortree_cpp/action_node.h>
 
-class MoveArmNamedTargetNode : public BT::StatefulActionNode {
+class WaitNode : public BT::StatefulActionNode {
 public:
-  MoveArmNamedTargetNode(const std::string & name, const BT::NodeConfig & config);
+  WaitNode(const std::string & name, const BT::NodeConfig & config);
   static BT::PortsList providedPorts();
   BT::NodeStatus onStart() override;
   BT::NodeStatus onRunning() override;
   void onHalted() override;
 
 private:
-  std::string target_name_;
-  std::string planning_group_;
+  int duration_ms_{1000};
+  std::chrono::steady_clock::time_point start_time_;
 };
