@@ -8,59 +8,71 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(geometry_msgs REQUIRED)
+# find_package(Eigen3 REQUIRED)
+# find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(tf2_eigen REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
+# find_package(tf2_eigen REQUIRED)
+# find_package(tf2_geometry_msgs REQUIRED)
 find_package(tms_robot_interfaces REQUIRED)
 
 include_directories(include)
 
-add_executable(move_tcp_z_server src/move_tcp_z_server.cpp)
-ament_target_dependencies(move_tcp_z_server 
-  Eigen3
-  geometry_msgs 
-  moveit_ros_planning_interface 
-  rclcpp 
-  rclcpp_action
-  tf2_eigen
-  tf2_geometry_msgs
-  tms_robot_interfaces)
+# add_executable(move_tcp_z_server src/move_tcp_z_server.cpp)
+# ament_target_dependencies(move_tcp_z_server 
+#   Eigen3
+#   geometry_msgs 
+#   moveit_ros_planning_interface 
+#   rclcpp 
+#   rclcpp_action
+#   tf2_eigen
+#   tf2_geometry_msgs
+#   tms_robot_interfaces)
 
-add_executable(tms_robot_executor src/tms_robot_executor.cpp)
-ament_target_dependencies(tms_robot_executor 
-  behaviortree_cpp 
-  geometry_msgs 
-  rclcpp
-  rclcpp_action
-  tms_robot_interfaces)
+# add_executable(tms_robot_executor src/tms_robot_executor.cpp)
+# ament_target_dependencies(tms_robot_executor 
+#   behaviortree_cpp 
+#   geometry_msgs 
+#   rclcpp
+#   rclcpp_action
+#   tms_robot_interfaces)
+
+set(BT_NODE_SOURCES
+  src/bt_nodes/check_system_ready.cpp
+  src/bt_nodes/move_arm_named_target.cpp
+  src/bt_nodes/report_status.cpp
+)
 
 add_executable(robot_task_executor 
   src/main.cpp
   src/task_executor_node.cpp
+  ${BT_NODE_SOURCES}
 )
 target_include_directories(robot_task_executor PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(robot_task_executor
-  rclcpp
-  rclcpp_action
   ament_index_cpp
   behaviortree_cpp
+  moveit_ros_planning_interface
+  rclcpp
+  rclcpp_action
   std_msgs
   tms_robot_interfaces
 )
 
 install(TARGETS 
-  move_tcp_z_server
-  tms_robot_executor
+  # move_tcp_z_server
+  # tms_robot_executor
   robot_task_executor
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY include/
+  DESTINATION include/
+)
 
 install(DIRECTORY
   launch

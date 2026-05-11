@@ -1,0 +1,10 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="MoveArmUpTask">
+    <Sequence name="move_arm_up_seq">
+      <CheckSystemReady name="check_system_ready"/>
+      <ReportStatus name="arm_up_start" message="Moving arm to up position"/>
+      <MoveArmNamedTarget name="move_up" target="up" planning_group="ur_arm"/>
+      <ReportStatus name="arm_up_done" message="Arm moved to up position"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

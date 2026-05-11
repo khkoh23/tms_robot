@@ -43,7 +43,8 @@ void MainWindow::buildUi() {
   task_selector_->clear();
   task_selector_->addItem("inspect");
   task_selector_->addItem("patrol");
-  task_selector_->addItem("move_arm_home");
+  task_selector_->addItem("move_arm_ready");
+  task_selector_->addItem("move_arm_up");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -83,13 +84,20 @@ QString MainWindow::selectedTaskName() const {
 
 QString MainWindow::selectedTreePath() const {
   const auto share_dir = QString::fromStdString(ament_index_cpp::get_package_share_directory("tms_robot_control"));
-  if (selectedTaskName() == "inspect") {
+  const auto task = selectedTaskName();
+  if (task == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";
   }
-  if (selectedTaskName() == "patrol") {
+  if (task == "patrol") {
     return share_dir + "/tree/patrol_tree.xml";
   }
-  return share_dir + "/tree/move_arm_home.xml";
+  if (task == "move_arm_ready") {
+    return share_dir + "/tree/move_arm_ready.xml";
+  }
+  if (task == "move_arm_up") {
+    return share_dir + "/tree/move_arm_up.xml";
+  }
+  return "";
 }
 
 void MainWindow::loadSelectedTree() {
