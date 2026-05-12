@@ -1,8 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from ament_index_python.packages import get_package_share_directory
-import os
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import (
     LaunchConfiguration,
@@ -18,7 +16,7 @@ def generate_launch_description():
         DeclareLaunchArgument("ur_type", default_value="ur10e")
     )
     declared_arguments.append(
-        DeclareLaunchArgument("robot_ip", default_value="192.168.56.101", description="IP address by which the robot can be reached.")
+        DeclareLaunchArgument("robot_ip", default_value="192.168.0.2", description="IP address by which the robot can be reached.")
     )
     declared_arguments.append(
         DeclareLaunchArgument("launch_rviz", default_value="false")
@@ -26,7 +24,6 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument("use_mock_hardware", default_value="true")
     )
-
     return LaunchDescription(
         declared_arguments
         + [

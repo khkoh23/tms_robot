@@ -104,6 +104,11 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          robot_mounting_plate:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           table:
             Alpha: 1
             Show Axes: false
@@ -201,7 +206,7 @@ Visualization Manager:
         Interactive Marker Size: 0.10000000149011612
         Joint Violation Color: 255; 0; 255
         Planning Group: ur_arm
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 0.5
@@ -262,6 +267,11 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          robot_mounting_plate:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           table:
             Alpha: 1
             Show Axes: false
@@ -381,7 +391,7 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 509
+  Height: 480
   Help:
     collapsed: false
   Hide Left Dock: true
@@ -390,7 +400,7 @@ Window Geometry:
     collapsed: true
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001ee00000273fc0200000005fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004400fffffffb000000100044006900730070006c006100790073000000003f000000cc000000cc00fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670000000111000001a10000019600fffffffb0000000800480065006c0070000000029a0000006e0000006f00fffffffb0000000a00560069006500770073000000031f000000b5000000a900ffffff000002800000019f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001ee00000182fc0200000005fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004400fffffffb000000100044006900730070006c006100790073000000003f000000be000000cc00fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670000000103000000be0000019600fffffffb0000000800480065006c0070000000029a0000006e0000006f00fffffffb0000000a00560069006500770073000000031f000000b5000000a900ffffff000002800000018200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 640

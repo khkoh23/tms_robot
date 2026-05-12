@@ -6,6 +6,7 @@
     <xacro:property name="table_width" value="0.620" /> <!-- y direction -->
     <xacro:property name="table_length" value="0.730" /> <!-- x direction -->
     <xacro:property name="table_height" value="0.710" />
+    <xacro:property name="plate_thickness" value="0.010" />
     <xacro:property name="table_dummy_head_offset" value="0.265" /> <!-- to be determined -->
     <xacro:property name="table_ur_offset" value="-0.2025" />
 
@@ -24,6 +25,22 @@
         <origin rpy="0 0 0" xyz="0 0 0"/>
       </collision>
     </link>
+
+    <link name="robot_mounting_plate">
+      <visual>
+        <geometry>
+          <box size="0.2 0.2 ${plate_thickness}"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <material name="white"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.2 0.2 ${plate_thickness}"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    </link>    
 
     <link name="dummy_head">
       <visual>
@@ -51,10 +68,16 @@
       <origin xyz="0 0 ${table_height/2}" rpy="0 0 0" />
     </joint>
 
-    <joint name="table_to_robot_mount" type="fixed">
+    <joint name="table_to_robot_mounting_plate" type="fixed">
       <parent link="table"/>
+      <child link="robot_mounting_plate"/>
+      <origin xyz="${table_ur_offset} 0 ${table_height/2+plate_thickness/2}" rpy="0 0 0" />
+    </joint>
+
+    <joint name="robot_mounting_head" type="fixed">
+      <parent link="robot_mounting_plate"/>
       <child link="robot_mount"/>
-      <origin xyz="${table_ur_offset} 0 ${table_height/2}" rpy="0 0 ${pi}" />
+      <origin xyz="0 0 ${plate_thickness/2}" rpy="0 0 ${pi}" />
     </joint>
 
     <joint name="table_to_dummy_head" type="fixed">

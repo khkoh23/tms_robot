@@ -12,7 +12,7 @@ def generate_launch_description():
     moveit_config = (MoveItConfigsBuilder("tms_robot_cell", package_name="tms_robot_moveit_config").to_moveit_configs())
     use_mock_hardware = LaunchConfiguration("use_mock_hardware")
     declared_arguments = []
-    declared_arguments.append(DeclareLaunchArgument("use_mock_hardware", default_value="true"))
+    declared_arguments.append(DeclareLaunchArgument("use_mock_hardware", default_value="false"))
 
     return LaunchDescription(declared_arguments + [
         IncludeLaunchDescription(
@@ -54,4 +54,32 @@ def generate_launch_description():
             ]
         ),
 
+        Node(
+            package='uc4_adc_driver',
+            executable='uc4_adc_driver',
+            name='uc4_adc_driver',
+            parameters=[{
+                'port': '/dev/uc4',
+                'baudrate': 460800,
+                'window_size': 10,  # buffer for moving average smoothing
+                'median_size': 3,   # buffer for spike median filter
+                'adc_min': 0.1,     # Raw ADC value at closest distance
+                'adc_max': 3.2,     # Raw ADC value at furthest distance
+                'dist_min': 0.025,  # Minimum distance in meters
+                'dist_max': 0.150   # Maximum distance in meters
+            }],
+            output='screen'
+        ),
+
+        Node(
+            package='robotiq_ft_sensor_hardware',
+            executable='robotiq_ft_sensor_standalone_node',
+            namespace='',
+            parameters=[{
+                'max_retries': 10,
+                'read_rate': 10,
+                'ftdi_id': 'fts',
+                'frame_id': 'robotiq_ft_frame_id',
+            }]
+        )
     ])
