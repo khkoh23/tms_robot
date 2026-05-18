@@ -45,6 +45,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("patrol");
   task_selector_->addItem("move_arm_ready");
   task_selector_->addItem("move_arm_up");
+  task_selector_->addItem("move_arm_above_head");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -96,6 +97,9 @@ QString MainWindow::selectedTreePath() const {
   }
   if (task == "move_arm_up") {
     return share_dir + "/tree/move_arm_up.xml";
+  }
+  if (selectedTaskName() == "move_arm_above_head") {
+    return share_dir + "/tree/move_arm_above_head.xml";
   }
   return "";
 }

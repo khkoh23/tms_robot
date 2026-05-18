@@ -12,6 +12,7 @@
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
 #include "tms_robot_control/bt_nodes/wait_node.hpp"
 #include "tms_robot_control/moveit/moveit_context.hpp"
+#include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
 
 using namespace std::chrono_literals;
 
@@ -45,6 +46,7 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<WaitNode>("Wait");
   factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
   factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");
+  factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
   factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
     return std::make_unique<ReportStatusNode>(name, config, [this](const std::string & msg) {
       publish_log(msg);
@@ -196,6 +198,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "move_arm_up") {
     return share_dir + "/tree/move_arm_up.xml";
+  }
+  if (task_name == "move_arm_above_head") {
+    return share_dir + "/tree/move_arm_above_head.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

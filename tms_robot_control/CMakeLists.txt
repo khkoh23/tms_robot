@@ -9,12 +9,13 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 # find_package(Eigen3 REQUIRED)
-# find_package(geometry_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 # find_package(tf2_eigen REQUIRED)
 # find_package(tf2_geometry_msgs REQUIRED)
 find_package(tms_robot_interfaces REQUIRED)
@@ -47,6 +48,7 @@ set(MOVEIT_HELPER_SOURCES
 set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
+  src/bt_nodes/move_to_frame_offset_pose.cpp
   src/bt_nodes/report_status.cpp
   src/bt_nodes/verify_named_target_reached.cpp
   src/bt_nodes/wait_node.cpp
@@ -66,11 +68,13 @@ target_include_directories(robot_task_executor PUBLIC
 ament_target_dependencies(robot_task_executor
   ament_index_cpp
   behaviortree_cpp
+  geometry_msgs
   moveit_msgs
   moveit_ros_planning_interface
   rclcpp
   rclcpp_action
   std_msgs
+  tf2
   tms_robot_interfaces
 )
 

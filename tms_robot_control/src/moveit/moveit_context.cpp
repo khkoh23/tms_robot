@@ -3,6 +3,8 @@
 #include <cmath>
 #include <exception>
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <tf2/LinearMath/Quaternion.h>
 
 bool MoveItContext::checkSystemReady(const std::string & planning_group, const std::string & target, std::string & error_msg) {
   if (!rclcpp::ok()) {
@@ -43,11 +45,60 @@ bool MoveItContext::startMoveToNamedTarget(const std::string & planning_group, c
     return false;
   }
   RCLCPP_INFO(node_->get_logger(), "Planning succeeded. Starting execution.");
-  active_planning_group_ = planning_group;
-  execution_future_ = std::async(std::launch::async, [move_group, plan = active_plan_]() { 
-    return move_group->execute(plan); 
+  active_planning_group_ = planning_group; 
+  auto plan_copy = active_plan_; 
+  execution_future_ = std::async(std::launch::async, [move_group, plan_copy]() mutable {
+    return move_group->execute(plan_copy);
   });
   return true;
+}
+
+bool MoveItContext::startMoveToFrameOffsetPose(const std::string & planning_group, const std::string & tcp_link, const std::string & reference_frame, double x, double y, double z, double roll, double pitch, double yaw, double velocity_scale, double acceleration_scale, std::string & error_msg) { 
+  auto * move_group = getMoveGroup(planning_group, error_msg);
+  if (!move_group) {
+    return false;
+  }
+  RCLCPP_INFO(node_->get_logger(), "Planning TCP pose target for link '%s' in frame '%s': xyz=[%.3f, %.3f, %.3f], rpy=[%.3f, %.3f, %.3f]",
+    tcp_link.c_str(), reference_frame.c_str(), x, y, z, roll, pitch, yaw);
+  geometry_msgs::msg::Pose target_pose;
+  target_pose.position.x = x;
+  target_pose.position.y = y;
+  target_pose.position.z = z;
+  tf2::Quaternion q;
+  q.setRPY(roll, pitch, yaw);
+  q.normalize();
+  target_pose.orientation.x = q.x();
+  target_pose.orientation.y = q.y();
+  target_pose.orientation.z = q.z();
+  target_pose.orientation.w = q.w();
+  try {
+    move_group->clearPoseTargets();
+    move_group->setPoseReferenceFrame(reference_frame);
+    if (!tcp_link.empty()) {
+      move_group->setEndEffectorLink(tcp_link);
+    }
+    move_group->setMaxVelocityScalingFactor(velocity_scale);
+    move_group->setMaxAccelerationScalingFactor(acceleration_scale);
+    move_group->setPoseTarget(target_pose, tcp_link);
+    const auto plan_result = move_group->plan(active_plan_);
+    if (plan_result.val != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      error_msg = "Planning failed for frame-offset pose target. MoveIt error code: " + std::to_string(plan_result.val);
+      RCLCPP_ERROR(node_->get_logger(), "%s", error_msg.c_str());
+      return false;
+    }
+    RCLCPP_INFO(node_->get_logger(), "Planning succeeded for frame-offset pose. Starting execution.");
+    active_planning_group_ = planning_group;
+    auto plan_copy = active_plan_;
+    execution_future_ = std::async(std::launch::async, [move_group, plan_copy]() mutable {
+      return move_group->execute(plan_copy); 
+    });
+    return true;
+  }
+  catch (const std::exception & e) {
+    error_msg = "Exception while planning frame-offset pose target: " + std::string(e.what());
+    RCLCPP_ERROR(node_->get_logger(), "%s", error_msg.c_str());
+    return false;
+  }
 }
 
 MoveItContext::MotionStatus MoveItContext::pollMotionResult(std::string & error_msg) {

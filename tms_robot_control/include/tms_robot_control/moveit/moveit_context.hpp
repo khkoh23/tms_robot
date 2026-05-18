@@ -16,6 +16,18 @@ public:
   explicit MoveItContext(rclcpp::Node::SharedPtr node);
   bool checkSystemReady(const std::string & planning_group, const std::string & target, std::string & error_msg);
   bool startMoveToNamedTarget(const std::string & planning_group, const std::string & target, std::string & error_msg);
+  bool startMoveToFrameOffsetPose(const std::string & planning_group, 
+    const std::string & tcp_link, 
+    const std::string & reference_frame, 
+    double x, 
+    double y, 
+    double z, 
+    double roll, 
+    double pitch, 
+    double yaw, 
+    double velocity_scale, 
+    double acceleration_scale, 
+    std::string & error_msg);
   MotionStatus pollMotionResult(std::string & error_msg);
   void stopMotion();
   bool verifyNamedTargetReached(const std::string & planning_group, 
