@@ -17,7 +17,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 # find_package(tf2_eigen REQUIRED)
-# find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(tms_robot_interfaces REQUIRED)
 
 include_directories(include)
@@ -41,17 +42,22 @@ include_directories(include)
 #   rclcpp_action
 #   tms_robot_interfaces)
 
-set(MOVEIT_HELPER_SOURCES
-  src/moveit/moveit_context.cpp
-)
-
 set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/move_to_frame_offset_pose.cpp
   src/bt_nodes/report_status.cpp
   src/bt_nodes/verify_named_target_reached.cpp
+  src/bt_nodes/wait_for_target_pose.cpp
   src/bt_nodes/wait_node.cpp
+)
+
+set(MOVEIT_HELPER_SOURCES
+  src/moveit/moveit_context.cpp
+)
+
+set(SENSOR_SOURCES
+  src/sensors/sensor_context.cpp
 )
 
 add_executable(robot_task_executor 
@@ -59,6 +65,7 @@ add_executable(robot_task_executor
   src/task_executor_node.cpp
   ${BT_NODE_SOURCES}
   ${MOVEIT_HELPER_SOURCES}
+  ${SENSOR_SOURCES}
 )
 
 target_include_directories(robot_task_executor PUBLIC
@@ -75,6 +82,8 @@ ament_target_dependencies(robot_task_executor
   rclcpp_action
   std_msgs
   tf2
+  tf2_geometry_msgs
+  tf2_ros
   tms_robot_interfaces
 )
 

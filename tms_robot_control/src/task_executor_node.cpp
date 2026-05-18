@@ -6,13 +6,15 @@
 #include <functional>
 #include <sstream>
 #include <thread>
-#include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
+#include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
+#include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
+#include "tms_robot_control/bt_nodes/wait_for_target_pose.hpp"
 #include "tms_robot_control/bt_nodes/wait_node.hpp"
 #include "tms_robot_control/moveit/moveit_context.hpp"
-#include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
+#include "tms_robot_control/sensors/sensor_context.hpp"
 
 using namespace std::chrono_literals;
 
@@ -54,6 +56,7 @@ void TaskExecutorNode::register_bt_nodes() {
     });
   });
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
+  factory_.registerNodeType<WaitForTargetPoseNode>("WaitForTargetPose");
 }
 
 rclcpp_action::GoalResponse TaskExecutorNode::handle_goal(const rclcpp_action::GoalUUID &, std::shared_ptr<const ExecuteTask::Goal> goal) {
@@ -164,6 +167,10 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name) {
       moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
     }
     blackboard->set<std::shared_ptr<MoveItContext>>("moveit_context", moveit_context_);
+    if (!sensor_context_) {
+      sensor_context_ = std::make_shared<SensorContext>(this->shared_from_this());
+    }
+    blackboard->set<std::shared_ptr<SensorContext>>("sensor_context", sensor_context_);
     tree_ = factory_.createTreeFromText(buffer.str(), blackboard);  
   } 
   catch (const std::exception & e) {
@@ -201,6 +208,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "move_arm_above_head") {
     return share_dir + "/tree/move_arm_above_head.xml";
+  }
+  if (task_name == "wait_for_target_pose_test") {
+    return share_dir + "/tree/wait_for_target_pose_test.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

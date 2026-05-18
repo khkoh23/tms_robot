@@ -6,6 +6,7 @@
 #include <behaviortree_cpp/tree_node.h>
 #include <rclcpp/rclcpp.hpp>
 #include "tms_robot_control/moveit/moveit_context.hpp"
+#include "tms_robot_control/sensors/sensor_context.hpp"
 
 inline bool is_cancel_requested_from_blackboard(const BT::NodeConfig & config) {
   if (!config.blackboard) {
@@ -32,4 +33,11 @@ inline std::shared_ptr<MoveItContext> get_moveit_context_from_blackboard(const B
     throw std::runtime_error("BT blackboard is null");
   }
   return config.blackboard->get<std::shared_ptr<MoveItContext>>("moveit_context");
+}
+
+inline std::shared_ptr<SensorContext> get_sensor_context_from_blackboard(const BT::NodeConfig & config) {
+  if (!config.blackboard) {
+    throw std::runtime_error("BT blackboard is null");
+  }
+  return config.blackboard->get<std::shared_ptr<SensorContext>>("sensor_context");
 }

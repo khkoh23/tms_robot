@@ -12,9 +12,9 @@
     <xacro:property name="qctool_offset" value="0.0006" />
     <xacro:property name="icmounting_offset_z" value="0.1334" />
     <xacro:property name="icmounting_offset_y" value="0.005" />
-    <xacro:property name="d405_offset_z" value="0.11783" />
-    <xacro:property name="d405_offset_y" value="-0.09915" />
-    <xacro:property name="d405_tilt" value="-0.66584311" /> <!--38.15deg-->
+    <xacro:property name="d405_offset_z" value="0.14415" />
+    <xacro:property name="d405_offset_y" value="-0.10636" />
+    <xacro:property name="d405_tilt" value="-0.8727" /> <!--50deg-->
     <xacro:property name="uc4_offset_z" value="0.07979" />
     <xacro:property name="uc4_offset_y" value="-0.03937" />
     <xacro:property name="uc4_tilt" value="0.349066" /> <!--20deg-->

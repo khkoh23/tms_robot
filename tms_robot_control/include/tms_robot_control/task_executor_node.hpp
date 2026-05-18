@@ -16,6 +16,8 @@
 
 class MoveItContext;
 
+class SensorContext;
+
 class TaskExecutorNode : public rclcpp::Node {
 public:
   using ExecuteTask = tms_robot_interfaces::action::ExecuteTask;
@@ -51,4 +53,5 @@ private:
   std::atomic<bool> task_running_{false};
   TaskLifecycleState lifecycle_state_{TaskLifecycleState::IDLE};
   std::shared_ptr<MoveItContext> moveit_context_;
+  std::shared_ptr<SensorContext> sensor_context_;
 };

@@ -1,0 +1,19 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="WaitForTargetPoseTest">
+    <Sequence name="wait_for_target_pose_test_seq">
+      <ReportStatus
+        name="pose_wait_start"
+        message="Waiting for TCP target pose"/>
+      <WaitForTargetPose
+        name="wait_tcp_target_pose"
+        timeout_sec="10.0"
+        freshness_sec="1.0"
+        transform_timeout_sec="0.2"
+        target_frame="ur10e_base_link"
+        blackboard_key="tcp_target_pose"/>
+      <ReportStatus
+        name="pose_wait_done"
+        message="TCP target pose received"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

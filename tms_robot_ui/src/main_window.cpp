@@ -46,6 +46,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("move_arm_ready");
   task_selector_->addItem("move_arm_up");
   task_selector_->addItem("move_arm_above_head");
+  task_selector_->addItem("wait_for_target_pose_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -100,6 +101,9 @@ QString MainWindow::selectedTreePath() const {
   }
   if (selectedTaskName() == "move_arm_above_head") {
     return share_dir + "/tree/move_arm_above_head.xml";
+  }
+  if (selectedTaskName() == "wait_for_target_pose_test") {
+    return share_dir + "/tree/wait_for_target_pose_test.xml";
   }
   return "";
 }
