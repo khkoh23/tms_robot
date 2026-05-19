@@ -8,6 +8,7 @@
 #include <thread>
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
 #include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
+#include "tms_robot_control/bt_nodes/move_tcp_relative_z.hpp"
 #include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
 #include "tms_robot_control/bt_nodes/move_to_tcp_target_pose_offset.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
@@ -49,6 +50,7 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<WaitNode>("Wait");
   factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
   factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");
+  factory_.registerNodeType<MoveTcpRelativeZNode>("MoveTcpRelativeZ");
   factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
   factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
   factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
@@ -217,6 +219,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "move_to_tcp_target_offset") {
     return share_dir + "/tree/move_to_tcp_target_offset.xml";
+  }
+  if (task_name == "move_tcp_relative_z_test") {
+    return share_dir + "/tree/move_tcp_relative_z_test.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

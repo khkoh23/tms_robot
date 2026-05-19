@@ -1,0 +1,22 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="MoveTcpRelativeZTest">
+    <Sequence name="move_tcp_relative_z_test_seq">
+      <CheckSystemReady
+        name="check_system_ready"
+        planning_group="ur_arm"/>
+      <ReportStatus
+        name="tcp_z_start"
+        message="Moving TCP relative +Z by 0.5 mm"/>
+      <MoveTcpRelativeZ
+        name="move_tcp_z_plus"
+        planning_group="ur_arm"
+        tcp_link="ur10e_tcp"
+        distance="0.0005"
+        velocity_scale="0.02"
+        acceleration_scale="0.02"
+        eef_step="0.0001"
+        min_fraction="0.90"
+        max_abs_distance="0.05"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

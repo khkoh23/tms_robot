@@ -49,6 +49,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("move_arm_above_head");
   task_selector_->addItem("wait_for_target_pose_test");
   task_selector_->addItem("move_to_tcp_target_offset");
+  task_selector_->addItem("move_tcp_relative_z_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -109,6 +110,9 @@ QString MainWindow::selectedTreePath() const {
   }
   if (selectedTaskName() == "move_to_tcp_target_offset") {
     return share_dir + "/tree/move_to_tcp_target_offset.xml";
+  }
+  if (selectedTaskName() == "move_tcp_relative_z_test") {
+    return share_dir + "/tree/move_tcp_relative_z_test.xml";
   }
   return "";
 }

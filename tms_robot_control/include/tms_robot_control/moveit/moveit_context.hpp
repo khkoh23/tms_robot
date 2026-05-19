@@ -47,6 +47,14 @@ public:
     double position_tolerance, 
     double orientation_tolerance, 
     std::string & error_msg);
+  bool startMoveTcpRelativeZ(const std::string & planning_group,
+    const std::string & tcp_link,
+    double distance_m,
+    double velocity_scale,
+    double acceleration_scale,
+    double eef_step,
+    double min_fraction,
+    std::string & error_msg);
 
 private:
   moveit::planning_interface::MoveGroupInterface * getMoveGroup(const std::string & planning_group, std::string & error_msg);

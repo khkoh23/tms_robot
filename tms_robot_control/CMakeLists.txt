@@ -46,6 +46,7 @@ include_directories(include)
 set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
+  src/bt_nodes/move_tcp_relative_z.cpp
   src/bt_nodes/move_to_frame_offset_pose.cpp
   src/bt_nodes/move_to_tcp_target_pose_offset.cpp
   src/bt_nodes/report_status.cpp
