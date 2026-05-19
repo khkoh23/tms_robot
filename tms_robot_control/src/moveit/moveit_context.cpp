@@ -179,6 +179,66 @@ bool MoveItContext::verifyNamedTargetReached(
   return true;
 }
 
+bool MoveItContext::startMoveToPoseStamped(const std::string & planning_group,
+  const std::string & tcp_link,
+  const geometry_msgs::msg::PoseStamped & target_pose,
+  double velocity_scale,
+  double acceleration_scale,
+  double planning_time,
+  int planning_attempts,
+  double position_tolerance,
+  double orientation_tolerance,
+  std::string & error_msg) {
+  auto * move_group = getMoveGroup(planning_group, error_msg);
+  if (!move_group) {
+    return false;
+  }
+  if (target_pose.header.frame_id.empty()) {
+    error_msg = "Target pose has empty frame_id";
+    return false;
+  }
+  RCLCPP_INFO(node_->get_logger(),
+    "Planning TCP pose for link '%s' in frame '%s': xyz=[%.3f, %.3f, %.3f]",
+    tcp_link.c_str(),
+    target_pose.header.frame_id.c_str(),
+    target_pose.pose.position.x,
+    target_pose.pose.position.y,
+    target_pose.pose.position.z);
+  try {
+    move_group->clearPoseTargets();
+    move_group->setPoseReferenceFrame(target_pose.header.frame_id);
+    if (!tcp_link.empty()) {
+      move_group->setEndEffectorLink(tcp_link);
+    }
+    move_group->setMaxVelocityScalingFactor(velocity_scale);
+    move_group->setMaxAccelerationScalingFactor(acceleration_scale);
+    move_group->setPlanningTime(planning_time);
+    move_group->setNumPlanningAttempts(planning_attempts);
+    move_group->setGoalPositionTolerance(position_tolerance);
+    move_group->setGoalOrientationTolerance(orientation_tolerance);
+    move_group->setPoseTarget(target_pose.pose, tcp_link);
+    const auto plan_result = move_group->plan(active_plan_);
+    if (plan_result.val != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      error_msg = "Planning failed for TCP target offset pose. MoveIt error code: " +
+        std::to_string(plan_result.val);
+      RCLCPP_ERROR(node_->get_logger(), "%s", error_msg.c_str());
+      return false;
+    }
+    RCLCPP_INFO(node_->get_logger(), "Planning succeeded for TCP target offset pose. Starting execution.");
+    active_planning_group_ = planning_group;
+    auto plan_copy = active_plan_;
+    execution_future_ = std::async(std::launch::async, [move_group, plan_copy]() mutable { 
+      return move_group->execute(plan_copy);
+    });
+    return true;
+  }
+  catch (const std::exception & e) {
+    error_msg = "Exception while planning TCP target offset pose: " + std::string(e.what());
+    RCLCPP_ERROR(node_->get_logger(), "%s", error_msg.c_str());
+    return false;
+  }
+}
+
 MoveItContext::MoveItContext(rclcpp::Node::SharedPtr node) : node_(node) {
 }
 

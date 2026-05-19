@@ -3,8 +3,7 @@ Panels:
     Help Height: 0
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Pose1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 140
   - Class: rviz_common/Help
@@ -346,14 +345,14 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-        Robot Alpha: 1
+        Robot Alpha: 0.699999988079071
         Show Robot Collision: false
         Show Robot Visual: true
       Value: true
       Velocity_Scaling_Factor: 0.1
     - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
+      Axes Length: 0.05000000074505806
+      Axes Radius: 0.009999999776482582
       Class: rviz_default_plugins/Pose
       Color: 255; 25; 0
       Enabled: true
@@ -362,7 +361,7 @@ Visualization Manager:
       Name: Pose
       Shaft Length: 0.10000000149011612
       Shaft Radius: 0.004999999888241291
-      Shape: Arrow
+      Shape: Axes
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -370,6 +369,105 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /camera/tcp_target_pose
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        d405:
+          Value: false
+        dummy_head:
+          Value: true
+        fts300s:
+          Value: false
+        iccoil:
+          Value: false
+        icmounting:
+          Value: false
+        qcrobot:
+          Value: false
+        qctool:
+          Value: false
+        robot_mount:
+          Value: false
+        robot_mounting_plate:
+          Value: false
+        table:
+          Value: false
+        uc4:
+          Value: false
+        ur10e_base:
+          Value: false
+        ur10e_base_link:
+          Value: true
+        ur10e_base_link_inertia:
+          Value: false
+        ur10e_flange:
+          Value: false
+        ur10e_forearm_link:
+          Value: false
+        ur10e_ft_frame:
+          Value: false
+        ur10e_shoulder_link:
+          Value: false
+        ur10e_tcp:
+          Value: true
+        ur10e_tool0:
+          Value: false
+        ur10e_upper_arm_link:
+          Value: false
+        ur10e_wrist_1_link:
+          Value: false
+        ur10e_wrist_2_link:
+          Value: false
+        ur10e_wrist_3_link:
+          Value: false
+        world:
+          Value: false
+      Marker Scale: 0.5
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        world:
+          table:
+            dummy_head:
+              {}
+            robot_mounting_plate:
+              robot_mount:
+                ur10e_base_link:
+                  ur10e_base:
+                    {}
+                  ur10e_base_link_inertia:
+                    ur10e_shoulder_link:
+                      ur10e_upper_arm_link:
+                        ur10e_forearm_link:
+                          ur10e_wrist_1_link:
+                            ur10e_wrist_2_link:
+                              ur10e_wrist_3_link:
+                                ur10e_flange:
+                                  ur10e_tool0:
+                                    fts300s:
+                                      d405:
+                                        {}
+                                      icmounting:
+                                        iccoil:
+                                          {}
+                                      qcrobot:
+                                        {}
+                                      qctool:
+                                        {}
+                                      uc4:
+                                        {}
+                                      ur10e_tcp:
+                                        {}
+                                ur10e_ft_frame:
+                                  {}
+      Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
@@ -421,7 +519,7 @@ Window Geometry:
     collapsed: true
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001ee000001cafc0200000005fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004400fffffffb000000100044006900730070006c006100790073000000003f000000cc000000cc00fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670000000111000000f80000019600fffffffb0000000800480065006c0070000000029a0000006e0000006f00fffffffb0000000a00560069006500770073000000031f000000b5000000a900ffffff000002800000018200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001ee000001a8fc0200000005fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004400fffffffb000000100044006900730070006c006100790073000000003f000000cc000000cc00fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670000000111000000d60000019600fffffffb0000000800480065006c0070000000029a0000006e0000006f00fffffffb0000000a00560069006500770073000000031f000000b5000000a900ffffff000002800000018200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 640

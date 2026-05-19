@@ -9,6 +9,7 @@
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
 #include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
 #include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
+#include "tms_robot_control/bt_nodes/move_to_tcp_target_pose_offset.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
 #include "tms_robot_control/bt_nodes/wait_for_target_pose.hpp"
@@ -49,6 +50,7 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
   factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");
   factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
+  factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
   factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
     return std::make_unique<ReportStatusNode>(name, config, [this](const std::string & msg) {
       publish_log(msg);
@@ -84,7 +86,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   cancel_requested_ = false;
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
-  if (!load_tree_for_task(goal->task_name)) {
+  if (!load_tree_for_task(goal->task_name, goal->tcp_offset_z_m)) {
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
     result->message = "Failed to load tree";
@@ -146,7 +148,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   goal_handle->abort(result);
 }
 
-bool TaskExecutorNode::load_tree_for_task(const std::string & task_name) {
+bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double tcp_offset_z_m) {
   const auto xml_path = task_xml_path(task_name);
   if (xml_path.empty()) {
     RCLCPP_ERROR(get_logger(), "Unknown task name: %s", task_name.c_str());
@@ -163,6 +165,7 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name) {
     auto blackboard = BT::Blackboard::create();
     blackboard->set<std::atomic<bool> *>("cancel_requested", &cancel_requested_);
     blackboard->set<rclcpp::Node::SharedPtr>("ros_node", this->shared_from_this());
+    blackboard->set<double>("tcp_offset_z_m", tcp_offset_z_m);
     if (!moveit_context_) {
       moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
     }
@@ -211,6 +214,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "wait_for_target_pose_test") {
     return share_dir + "/tree/wait_for_target_pose_test.xml";
+  }
+  if (task_name == "move_to_tcp_target_offset") {
+    return share_dir + "/tree/move_to_tcp_target_offset.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

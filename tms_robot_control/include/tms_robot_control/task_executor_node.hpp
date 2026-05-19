@@ -33,7 +33,7 @@ private:
   rclcpp_action::CancelResponse handle_cancel(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   void handle_accepted(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   void execute_goal(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
-  bool load_tree_for_task(const std::string & task_name);
+  bool load_tree_for_task(const std::string & task_name, double tcp_offset_z_m);
   void publish_tree_status();
   std::string task_xml_path(const std::string & task_name) const;
   std::string lifecycle_state_to_string(TaskLifecycleState state) const;

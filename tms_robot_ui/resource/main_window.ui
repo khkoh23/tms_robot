@@ -82,6 +82,39 @@
               <widget class="QComboBox" name="task_selector"/>
              </item>
              <item>
+              <layout class="QHBoxLayout" name="tcp_offset_layout">
+               <item>
+                <widget class="QLabel" name="tcp_offset_label">
+                 <property name="text">
+                  <string>TCP Z Offset</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="tcp_offset_spinbox">
+                 <property name="suffix">
+                  <string> mm</string>
+                 </property>
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>30.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>100.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>5.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>100.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
               <widget class="QPushButton" name="start_button">
                <property name="text">
                 <string>Start Task</string>

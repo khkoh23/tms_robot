@@ -1,0 +1,38 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="MoveToTcpTargetOffsetTask">
+    <Sequence name="move_to_tcp_target_offset_seq">
+      <CheckSystemReady
+        name="check_system_ready"
+        planning_group="ur_arm"/>
+      <ReportStatus
+        name="wait_pose_start"
+        message="Waiting for TCP target pose"/>
+      <WaitForTargetPose
+        name="wait_tcp_target_pose"
+        timeout_sec="10.0"
+        freshness_sec="1.0"
+        transform_timeout_sec="0.2"
+        target_frame="ur10e_base_link"
+        blackboard_key="tcp_target_pose"/>
+      <ReportStatus
+        name="move_offset_start"
+        message="Moving to TCP target offset pose"/>
+      <MoveToTcpTargetPoseOffset
+        name="move_to_tcp_target_offset"
+        planning_group="ur_arm"
+        tcp_link="ur10e_tcp"
+        pose_key="tcp_target_pose"
+        offset_z_key="tcp_offset_z_m"
+        marker_topic="/debug/tcp_target_offset_marker"
+        velocity_scale="0.03"
+        acceleration_scale="0.03"
+        planning_time="10.0"
+        planning_attempts="5"
+        position_tolerance="0.003"
+        orientation_tolerance="0.03"/>
+      <ReportStatus
+        name="move_offset_done"
+        message="Moved to TCP target offset pose"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

@@ -1,4 +1,5 @@
 string task_name
+float64 tcp_offset_z_m
 
 ---
 bool success

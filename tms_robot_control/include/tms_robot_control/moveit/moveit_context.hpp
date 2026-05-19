@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
 #include <moveit/utils/moveit_error_code.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -35,6 +36,16 @@ public:
     double tolerance,
     double & max_error,
     std::string & worst_joint,
+    std::string & error_msg);
+  bool startMoveToPoseStamped(const std::string & planning_group,
+    const std::string & tcp_link, 
+    const geometry_msgs::msg::PoseStamped & target_pose, 
+    double velocity_scale, 
+    double acceleration_scale, 
+    double planning_time, 
+    int planning_attempts, 
+    double position_tolerance, 
+    double orientation_tolerance, 
     std::string & error_msg);
 
 private:

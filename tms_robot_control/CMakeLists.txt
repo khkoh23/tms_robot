@@ -20,6 +20,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tms_robot_interfaces REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 include_directories(include)
 
@@ -46,6 +47,7 @@ set(BT_NODE_SOURCES
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/move_to_frame_offset_pose.cpp
+  src/bt_nodes/move_to_tcp_target_pose_offset.cpp
   src/bt_nodes/report_status.cpp
   src/bt_nodes/verify_named_target_reached.cpp
   src/bt_nodes/wait_for_target_pose.cpp
@@ -85,6 +87,7 @@ ament_target_dependencies(robot_task_executor
   tf2_geometry_msgs
   tf2_ros
   tms_robot_interfaces
+  visualization_msgs
 )
 
 install(TARGETS 

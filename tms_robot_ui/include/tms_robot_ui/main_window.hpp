@@ -9,6 +9,7 @@
 #include <QTreeWidget>
 #include <QSplitter>
 #include <QTimer>
+#include <QDoubleSpinBox>
 #include <QDomDocument>
 #include <QList>
 #include <QMap>
@@ -26,6 +27,7 @@ class QComboBox;
 class QTextEdit;
 class QTreeWidget;
 class QTreeWidgetItem;
+class QDoubleSpinBox;
 class QTimer;
 class RosBridge;
 class RvizWidget;
@@ -73,6 +75,7 @@ private:
   QLabel * state_label_;
   QLabel * active_node_label_;
   QComboBox * task_selector_;
+  QDoubleSpinBox * tcp_offset_spinbox_;
   QPushButton * zero_button_;
   QPushButton * start_button_;
   QPushButton * cancel_button_;

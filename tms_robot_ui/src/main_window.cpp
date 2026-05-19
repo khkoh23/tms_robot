@@ -31,6 +31,7 @@ MainWindow::~MainWindow() = default;
 void MainWindow::buildUi() {
   ui_->setupUi(this);
   task_selector_ = ui_->task_selector;
+  tcp_offset_spinbox_ = ui_->tcp_offset_spinbox;
   zero_button_ = ui_->zero_button;
   start_button_ = ui_->start_button;
   cancel_button_ = ui_->cancel_button;
@@ -47,6 +48,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("move_arm_up");
   task_selector_->addItem("move_arm_above_head");
   task_selector_->addItem("wait_for_target_pose_test");
+  task_selector_->addItem("move_to_tcp_target_offset");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -105,6 +107,9 @@ QString MainWindow::selectedTreePath() const {
   if (selectedTaskName() == "wait_for_target_pose_test") {
     return share_dir + "/tree/wait_for_target_pose_test.xml";
   }
+  if (selectedTaskName() == "move_to_tcp_target_offset") {
+    return share_dir + "/tree/move_to_tcp_target_offset.xml";
+  }
   return "";
 }
 
@@ -117,7 +122,8 @@ void MainWindow::onZeroClicked() {
 }
 
 void MainWindow::onStartClicked() {
-  ros_bridge_->startTask(selectedTaskName());
+  const double tcp_offset_z_mm = tcp_offset_spinbox_->value();
+  ros_bridge_->startTask(selectedTaskName(), tcp_offset_z_mm);
 }
 
 void MainWindow::onCancelClicked() {

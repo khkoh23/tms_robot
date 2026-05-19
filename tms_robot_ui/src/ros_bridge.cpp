@@ -71,13 +71,15 @@ void RosBridge::zeroFTS() {
   emit logMessage("Zeroing FTS300-S ...");
 }
 
-void RosBridge::startTask(const QString & task_name) {
+void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm) {
   if (!action_client_->wait_for_action_server(std::chrono::seconds(2))) {
     emit logMessage("ExecuteTask action server not available");
     return;
   }
   ExecuteTask::Goal goal;
   goal.task_name = task_name.toStdString();
+  goal.tcp_offset_z_m = tcp_offset_z_mm / 1000.0;
+  emit logMessage(QString("TCP Z offset: %1 mm").arg(tcp_offset_z_mm, 0, 'f', 1));
   auto options = rclcpp_action::Client<ExecuteTask>::SendGoalOptions();
   options.goal_response_callback =
     [this](GoalHandleExecuteTask::SharedPtr handle) {
