@@ -50,6 +50,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("wait_for_target_pose_test");
   task_selector_->addItem("move_to_tcp_target_offset");
   task_selector_->addItem("move_tcp_relative_z_test");
+  task_selector_->addItem("approach_tcp_z_force_band_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -113,6 +114,9 @@ QString MainWindow::selectedTreePath() const {
   }
   if (selectedTaskName() == "move_tcp_relative_z_test") {
     return share_dir + "/tree/move_tcp_relative_z_test.xml";
+  }
+  if (selectedTaskName() == "approach_tcp_z_force_band_test") {
+    return share_dir + "/tree/approach_tcp_z_force_band_test.xml";
   }
   return "";
 }

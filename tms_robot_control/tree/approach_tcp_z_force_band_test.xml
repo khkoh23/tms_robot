@@ -1,0 +1,28 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="ApproachTcpZForceBandTest">
+    <Sequence name="approach_tcp_z_force_band_test_seq">
+      <CheckSystemReady
+        name="check_system_ready"
+        planning_group="ur_arm"/>
+      <ReportStatus
+        name="force_approach_start"
+        message="Starting TCP force-band approach"/>
+      <ApproachTcpZForceBand
+        name="approach_force_band"
+        planning_group="ur_arm"
+        tcp_link="ur10e_tcp"
+        min_force_z="-8.0"
+        max_force_z="-3.0"
+        hard_min_force_z="-10.0"
+        step_distance="0.0005"
+        max_total_advance="0.050"
+        force_freshness_sec="0.20"
+        force_wait_timeout_sec="5.0"
+        velocity_scale="0.01"
+        acceleration_scale="0.01"/>
+      <ReportStatus
+        name="force_approach_done"
+        message="TCP force-band approach complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

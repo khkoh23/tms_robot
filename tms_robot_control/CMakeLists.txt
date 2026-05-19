@@ -44,6 +44,7 @@ include_directories(include)
 #   tms_robot_interfaces)
 
 set(BT_NODE_SOURCES
+  src/bt_nodes/approach_tcp_z_force_band.cpp
   src/bt_nodes/check_system_ready.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/move_tcp_relative_z.cpp

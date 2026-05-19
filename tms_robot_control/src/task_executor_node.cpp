@@ -6,6 +6,7 @@
 #include <functional>
 #include <sstream>
 #include <thread>
+#include "tms_robot_control/bt_nodes/approach_tcp_z_force_band.hpp"
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
 #include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
 #include "tms_robot_control/bt_nodes/move_tcp_relative_z.hpp"
@@ -53,6 +54,7 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<MoveTcpRelativeZNode>("MoveTcpRelativeZ");
   factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
   factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
+  factory_.registerNodeType<ApproachTcpZForceBandNode>("ApproachTcpZForceBand");
   factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
     return std::make_unique<ReportStatusNode>(name, config, [this](const std::string & msg) {
       publish_log(msg);
@@ -222,6 +224,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "move_tcp_relative_z_test") {
     return share_dir + "/tree/move_tcp_relative_z_test.xml";
+  }
+  if (task_name == "approach_tcp_z_force_band_test") {
+    return share_dir + "/tree/approach_tcp_z_force_band_test.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";
