@@ -32,6 +32,17 @@ BT::NodeStatus SetAllowedCollisionNode::tick() {
     RCLCPP_ERROR(rclcpp::get_logger("SetAllowedCollisionNode"), "%s", error_msg.c_str());
     return BT::NodeStatus::FAILURE;
   }
+  try {
+    auto * contact_recovery_required = get_contact_recovery_required_flag(config()); 
+    const bool is_contact_pair = (link1.value() == "iccoil" && link2.value() == "dummy_head") || 
+      (link1.value() == "dummy_head" && link2.value() == "iccoil");
+    if (contact_recovery_required && is_contact_pair) {
+      contact_recovery_required->store(allowed.value());
+    }
+  }
+  catch (const std::exception &) {
+    // Some test trees may not provide this blackboard flag.
+  }
   RCLCPP_INFO(rclcpp::get_logger("SetAllowedCollisionNode"), "Set allowed collision: %s <-> %s = %s",
     link1.value().c_str(),
     link2.value().c_str(),

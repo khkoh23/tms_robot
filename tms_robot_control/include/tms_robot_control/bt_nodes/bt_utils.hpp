@@ -41,3 +41,10 @@ inline std::shared_ptr<SensorContext> get_sensor_context_from_blackboard(const B
   }
   return config.blackboard->get<std::shared_ptr<SensorContext>>("sensor_context");
 }
+
+inline std::atomic<bool> * get_contact_recovery_required_flag(const BT::NodeConfig & config) {
+  if (!config.blackboard) {
+    throw std::runtime_error("BT blackboard is null");
+  }
+  return config.blackboard->get<std::atomic<bool> *>("contact_recovery_required");
+}

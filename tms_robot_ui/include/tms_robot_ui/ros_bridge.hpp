@@ -23,7 +23,7 @@ public:
   ~RosBridge();
   rclcpp::Node::SharedPtr node() const { return node_; }
   void zeroFTS();
-  void startTask(const QString & task_name, double tcp_offset_z_mm);
+  void startTask(const QString & task_name, double tcp_offset_z_mm, double treatment_duration_sec);
   void cancelTask();
 signals:
   void taskStateUpdated(const QString & task_name, 

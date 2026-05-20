@@ -32,6 +32,7 @@ void MainWindow::buildUi() {
   ui_->setupUi(this);
   task_selector_ = ui_->task_selector;
   tcp_offset_spinbox_ = ui_->tcp_offset_spinbox;
+  treatment_duration_spinbox_ = ui_->treatment_duration_spinbox;
   zero_button_ = ui_->zero_button;
   start_button_ = ui_->start_button;
   cancel_button_ = ui_->cancel_button;
@@ -52,6 +53,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("move_tcp_relative_z_test");
   task_selector_->addItem("approach_tcp_z_force_band_test");
   task_selector_->addItem("retract_from_contact");
+  task_selector_->addItem("contact_treatment_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -122,6 +124,9 @@ QString MainWindow::selectedTreePath() const {
   if (selectedTaskName() == "retract_from_contact") {
     return share_dir + "/tree/retract_from_contact.xml";
   }
+  if (selectedTaskName() == "contact_treatment_test") {
+    return share_dir + "/tree/contact_treatment_test.xml";
+  }
   return "";
 }
 
@@ -135,7 +140,8 @@ void MainWindow::onZeroClicked() {
 
 void MainWindow::onStartClicked() {
   const double tcp_offset_z_mm = tcp_offset_spinbox_->value();
-  ros_bridge_->startTask(selectedTaskName(), tcp_offset_z_mm);
+  const double treatment_duration_sec = treatment_duration_spinbox_->value();
+  ros_bridge_->startTask(selectedTaskName(), tcp_offset_z_mm, treatment_duration_sec);
 }
 
 void MainWindow::onCancelClicked() {

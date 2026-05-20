@@ -115,6 +115,36 @@
               </layout>
              </item>
              <item>
+              <layout class="QHBoxLayout" name="treatment_duration_layout">
+               <item>
+                <widget class="QLabel" name="treatment_duration_label">
+                 <property name="text">
+                  <string>Treatment Time</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="treatment_duration_spinbox">
+                 <property name="suffix">
+                  <string> sec</string>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="minimum">
+                  <double>10.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>300.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>10.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
               <widget class="QPushButton" name="start_button">
                <property name="text">
                 <string>Start Task</string>

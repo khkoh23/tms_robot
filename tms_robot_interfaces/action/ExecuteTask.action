@@ -1,5 +1,6 @@
 string task_name
 float64 tcp_offset_z_m
+float64 treatment_duration_sec
 
 ---
 bool success

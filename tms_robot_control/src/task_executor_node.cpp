@@ -14,6 +14,7 @@
 #include "tms_robot_control/bt_nodes/move_to_tcp_target_pose_offset.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
 #include "tms_robot_control/bt_nodes/set_allowed_collision.hpp"
+#include "tms_robot_control/bt_nodes/treatment_force_band_hold.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
 #include "tms_robot_control/bt_nodes/wait_for_target_pose.hpp"
 #include "tms_robot_control/bt_nodes/wait_node.hpp"
@@ -63,6 +64,7 @@ void TaskExecutorNode::register_bt_nodes() {
     });
   });
   factory_.registerNodeType<SetAllowedCollisionNode>("SetAllowedCollision");
+  factory_.registerNodeType<TreatmentForceBandHoldNode>("TreatmentForceBandHold");
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
   factory_.registerNodeType<WaitForTargetPoseNode>("WaitForTargetPose");
 }
@@ -92,7 +94,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   cancel_requested_ = false;
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
-  if (!load_tree_for_task(goal->task_name, goal->tcp_offset_z_m)) {
+  if (!load_tree_for_task(goal->task_name, goal->tcp_offset_z_m, goal->treatment_duration_sec)) {
     restore_contact_collision_allowance();
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
@@ -108,7 +110,13 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     if (cancel_requested_) {
       tree_.haltTree();
       publish_tree_status();
-      restore_contact_collision_allowance();
+      if (contact_recovery_required_.load()) {
+        publish_log("Cancel requested: performing contact recovery retract");
+        perform_contact_recovery_retract();
+      } 
+      else {
+        restore_contact_collision_allowance();
+      }
       set_lifecycle_state(TaskLifecycleState::CANCELED, goal->task_name, "", "Task canceled");
       publish_log("Task canceled: " + goal->task_name);
       result->success = false;
@@ -159,7 +167,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   goal_handle->abort(result);
 }
 
-bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double tcp_offset_z_m) {
+bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double tcp_offset_z_m, double treatment_duration_sec) {
   const auto xml_path = task_xml_path(task_name);
   if (xml_path.empty()) {
     RCLCPP_ERROR(get_logger(), "Unknown task name: %s", task_name.c_str());
@@ -176,6 +184,9 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double 
     auto blackboard = BT::Blackboard::create();
     blackboard->set<std::atomic<bool> *>("cancel_requested", &cancel_requested_);
     blackboard->set<rclcpp::Node::SharedPtr>("ros_node", this->shared_from_this());
+    contact_recovery_required_.store(false);
+    blackboard->set<double>("treatment_duration_sec", treatment_duration_sec);
+    blackboard->set<std::atomic<bool> *>("contact_recovery_required", &contact_recovery_required_);
     blackboard->set<double>("tcp_offset_z_m", tcp_offset_z_m);
     if (!moveit_context_) {
       moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
@@ -237,6 +248,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "retract_from_contact") {
     return share_dir + "/tree/retract_from_contact.xml";
+  }
+  if (task_name == "contact_treatment_test") {
+    return share_dir + "/tree/contact_treatment_test.xml";
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";
@@ -330,4 +344,50 @@ void TaskExecutorNode::restore_contact_collision_allowance() {
   if (!moveit_context_->setAllowedCollision("iccoil", "dummy_head", false, error_msg)) {
     RCLCPP_WARN(get_logger(), "Failed to restore iccoil/dummy_head collision checking: %s", error_msg.c_str());
   }
+}
+
+bool TaskExecutorNode::perform_contact_recovery_retract() {
+  if (!moveit_context_) {
+    RCLCPP_WARN(get_logger(), "Cannot perform contact recovery retract: MoveItContext is null");
+    return false;
+  }
+  RCLCPP_WARN(get_logger(), "Performing contact recovery retract after cancel");
+  std::string error_msg;
+  if (!moveit_context_->setAllowedCollision("iccoil", 
+    "dummy_head", 
+    true, 
+    error_msg)) {
+    RCLCPP_ERROR(get_logger(), "Failed to enable contact collision for recovery: %s", error_msg.c_str());
+    return false;
+  }
+  if (!moveit_context_->startMoveTcpRelativeZ("ur_arm",
+    "ur10e_tcp",
+    -0.050,
+    0.01,
+    0.01,
+    0.0001,
+    0.90,
+    true,
+    error_msg)) {
+    RCLCPP_ERROR(get_logger(), "Failed to start contact recovery retract: %s", error_msg.c_str());
+    restore_contact_collision_allowance();
+    return false;
+  }
+  while (rclcpp::ok()) {
+    const auto status = moveit_context_->pollMotionResult(error_msg);
+    if (status == MoveItContext::MotionStatus::RUNNING) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      continue;
+    }
+    restore_contact_collision_allowance();
+    if (status == MoveItContext::MotionStatus::SUCCESS) {
+      RCLCPP_INFO(get_logger(), "Contact recovery retract completed successfully");
+      contact_recovery_required_.store(false);
+      return true;
+    }
+    RCLCPP_ERROR(get_logger(),  "Contact recovery retract failed: %s", error_msg.c_str());
+    return false;
+  }
+  restore_contact_collision_allowance();
+  return false;
 }

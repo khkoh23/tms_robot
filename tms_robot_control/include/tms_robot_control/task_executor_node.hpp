@@ -33,7 +33,7 @@ private:
   rclcpp_action::CancelResponse handle_cancel(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   void handle_accepted(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
   void execute_goal(const std::shared_ptr<GoalHandleExecuteTask> goal_handle);
-  bool load_tree_for_task(const std::string & task_name, double tcp_offset_z_m);
+  bool load_tree_for_task(const std::string & task_name, double tcp_offset_z_m, double treatment_duration_sec);
   void publish_tree_status();
   std::string task_xml_path(const std::string & task_name) const;
   std::string lifecycle_state_to_string(TaskLifecycleState state) const;
@@ -43,6 +43,7 @@ private:
   std::string status_to_string(BT::NodeStatus status) const;
   std::string node_type_to_string(BT::NodeType type) const;
   void restore_contact_collision_allowance();
+  bool perform_contact_recovery_retract();
   rclcpp_action::Server<ExecuteTask>::SharedPtr action_server_;
   rclcpp::Publisher<tms_robot_interfaces::msg::BtNodeStatus>::SharedPtr bt_node_pub_;
   rclcpp::Publisher<tms_robot_interfaces::msg::BtState>::SharedPtr bt_state_pub_;
@@ -52,6 +53,7 @@ private:
   std::unordered_map<std::string, std::string> last_status_;
   std::atomic<bool> cancel_requested_{false};
   std::atomic<bool> task_running_{false};
+  std::atomic<bool> contact_recovery_required_{false};
   TaskLifecycleState lifecycle_state_{TaskLifecycleState::IDLE};
   std::shared_ptr<MoveItContext> moveit_context_;
   std::shared_ptr<SensorContext> sensor_context_;

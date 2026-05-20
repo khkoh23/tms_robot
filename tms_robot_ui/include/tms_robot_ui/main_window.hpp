@@ -76,6 +76,7 @@ private:
   QLabel * active_node_label_;
   QComboBox * task_selector_;
   QDoubleSpinBox * tcp_offset_spinbox_;
+  QDoubleSpinBox * treatment_duration_spinbox_;
   QPushButton * zero_button_;
   QPushButton * start_button_;
   QPushButton * cancel_button_;
