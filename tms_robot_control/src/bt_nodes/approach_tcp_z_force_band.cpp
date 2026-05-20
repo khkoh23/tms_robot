@@ -22,7 +22,8 @@ BT::PortsList ApproachTcpZForceBandNode::providedPorts() {
     BT::InputPort<double>("velocity_scale", 0.01, "MoveIt max velocity scaling factor"),
     BT::InputPort<double>("acceleration_scale", 0.01, "MoveIt max acceleration scaling factor"),
     BT::InputPort<double>("eef_step", 0.0001, "Cartesian path interpolation step in meters"),
-    BT::InputPort<double>("min_fraction", 0.90, "Minimum Cartesian path fraction")
+    BT::InputPort<double>("min_fraction", 0.90, "Minimum Cartesian path fraction"),
+    BT::InputPort<bool>("avoid_collisions", true, "Whether TCP Z Cartesian approach should avoid collisions")
   };
 }
 
@@ -43,12 +44,14 @@ BT::NodeStatus ApproachTcpZForceBandNode::onStart() {
   auto acceleration_scale = getInput<double>("acceleration_scale");
   auto eef_step = getInput<double>("eef_step");
   auto min_fraction = getInput<double>("min_fraction");
+  auto avoid_collisions = getInput<bool>("avoid_collisions");
   if (!planning_group || !tcp_link ||
     !min_force_z || !max_force_z || !hard_min_force_z ||
     !step_distance || !max_total_advance ||
     !force_freshness_sec || !force_wait_timeout_sec ||
     !velocity_scale || !acceleration_scale ||
-    !eef_step || !min_fraction) {
+    !eef_step || !min_fraction ||
+    !avoid_collisions) {
     RCLCPP_ERROR(rclcpp::get_logger("ApproachTcpZForceBandNode"), "Missing required input port");
     return BT::NodeStatus::FAILURE;
   }
@@ -65,17 +68,19 @@ BT::NodeStatus ApproachTcpZForceBandNode::onStart() {
   acceleration_scale_ = acceleration_scale.value();
   eef_step_ = eef_step.value();
   min_fraction_ = min_fraction.value();
+  avoid_collisions_ = avoid_collisions.value();
   total_motion_abs_ = 0.0;
   step_count_ = 0;
   step_state_ = StepState::IDLE;
   start_time_ = std::chrono::steady_clock::now();
   RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"),
-    "Starting force-band TCP Z approach. Band=[%.2f, %.2f] N, hard_min=%.2f N, step=%.6f m, max_total=%.3f m",
+    "Starting force-band TCP Z approach. Band=[%.2f, %.2f] N, hard_min=%.2f N, step=%.6f m, max_total=%.3f m, avoid_collisions=%s",
     min_force_z_,
     max_force_z_,
     hard_min_force_z_,
     step_distance_,
-    max_total_advance_);
+    max_total_advance_, 
+    avoid_collisions_ ? "true" : "false");
   return BT::NodeStatus::RUNNING;
 }
 
@@ -176,7 +181,8 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
     velocity_scale_,
     acceleration_scale_,
     eef_step_,
-    min_fraction_,
+    min_fraction_, 
+    avoid_collisions_,
     error_msg)) {
     RCLCPP_ERROR(rclcpp::get_logger("ApproachTcpZForceBandNode"),
       "Failed to start TCP Z step: %s",

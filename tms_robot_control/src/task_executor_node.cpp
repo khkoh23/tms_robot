@@ -13,6 +13,7 @@
 #include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
 #include "tms_robot_control/bt_nodes/move_to_tcp_target_pose_offset.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
+#include "tms_robot_control/bt_nodes/set_allowed_collision.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
 #include "tms_robot_control/bt_nodes/wait_for_target_pose.hpp"
 #include "tms_robot_control/bt_nodes/wait_node.hpp"
@@ -61,6 +62,7 @@ void TaskExecutorNode::register_bt_nodes() {
       RCLCPP_INFO(this->get_logger(), "%s", msg.c_str()); 
     });
   });
+  factory_.registerNodeType<SetAllowedCollisionNode>("SetAllowedCollision");
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
   factory_.registerNodeType<WaitForTargetPoseNode>("WaitForTargetPose");
 }
@@ -91,6 +93,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
   if (!load_tree_for_task(goal->task_name, goal->tcp_offset_z_m)) {
+    restore_contact_collision_allowance();
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
     result->message = "Failed to load tree";
@@ -105,6 +108,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     if (cancel_requested_) {
       tree_.haltTree();
       publish_tree_status();
+      restore_contact_collision_allowance();
       set_lifecycle_state(TaskLifecycleState::CANCELED, goal->task_name, "", "Task canceled");
       publish_log("Task canceled: " + goal->task_name);
       result->success = false;
@@ -129,6 +133,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     goal_handle->publish_feedback(feedback);
     publish_task_state(goal->task_name, state_string, active_node, "Executing");
     if (status == BT::NodeStatus::SUCCESS) {
+      restore_contact_collision_allowance();
       set_lifecycle_state(TaskLifecycleState::SUCCESS, goal->task_name, "", "Task succeeded");
       publish_log("Task succeeded: " + goal->task_name);
       result->success = true;
@@ -137,6 +142,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
       return;
     }
     if (status == BT::NodeStatus::FAILURE) {
+      restore_contact_collision_allowance();
       set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, active_node, "Task failed");
       publish_log("Task failed: " + goal->task_name);
       result->success = false;
@@ -146,6 +152,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     }
     std::this_thread::sleep_for(50ms);
   }
+  restore_contact_collision_allowance();
   set_lifecycle_state(TaskLifecycleState::FAULT, goal->task_name, "", "ROS shutdown during task execution");
   result->success = false;
   result->message = "ROS shutdown during task execution";
@@ -228,6 +235,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   if (task_name == "approach_tcp_z_force_band_test") {
     return share_dir + "/tree/approach_tcp_z_force_band_test.xml";
   }
+  if (task_name == "retract_from_contact") {
+    return share_dir + "/tree/retract_from_contact.xml";
+  }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";
   }
@@ -309,5 +319,15 @@ std::string TaskExecutorNode::node_type_to_string(BT::NodeType type) const {
       return "SUBTREE";
     default:
       return "UNKNOWN";
+  }
+}
+
+void TaskExecutorNode::restore_contact_collision_allowance() {
+  if (!moveit_context_) {
+    return;
+  }
+  std::string error_msg;
+  if (!moveit_context_->setAllowedCollision("iccoil", "dummy_head", false, error_msg)) {
+    RCLCPP_WARN(get_logger(), "Failed to restore iccoil/dummy_head collision checking: %s", error_msg.c_str());
   }
 }

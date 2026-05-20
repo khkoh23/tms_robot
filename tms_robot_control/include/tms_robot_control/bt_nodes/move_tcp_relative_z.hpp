@@ -20,4 +20,5 @@ private:
   double eef_step_{0.0001};
   double min_fraction_{0.90};
   double max_abs_distance_m_{0.05};
+  bool avoid_collisions_{true};
 };

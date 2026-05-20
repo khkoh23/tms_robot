@@ -29,6 +29,7 @@ private:
   double acceleration_scale_{0.01};
   double eef_step_{0.0001};
   double min_fraction_{0.90};
+  bool avoid_collisions_{true};
   double total_motion_abs_{0.0};
   int step_count_{0};
   StepState step_state_{StepState::IDLE};

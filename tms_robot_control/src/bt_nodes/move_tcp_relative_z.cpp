@@ -17,7 +17,8 @@ BT::PortsList MoveTcpRelativeZNode::providedPorts() {
     BT::InputPort<double>("acceleration_scale", 0.02, "MoveIt max acceleration scaling factor"), 
     BT::InputPort<double>("eef_step", 0.0001, "Cartesian path interpolation step in meters"),
     BT::InputPort<double>("min_fraction", 0.90, "Minimum required Cartesian path fraction"),
-    BT::InputPort<double>("max_abs_distance", 0.05, "Reject relative motion larger than this absolute distance in meters")
+    BT::InputPort<double>("max_abs_distance", 0.05, "Reject relative motion larger than this absolute distance in meters"),
+    BT::InputPort<bool>("avoid_collisions", true, "Whether Cartesian path computation should avoid collisions")
   };
 }
 
@@ -34,9 +35,11 @@ BT::NodeStatus MoveTcpRelativeZNode::onStart() {
   auto eef_step = getInput<double>("eef_step");
   auto min_fraction = getInput<double>("min_fraction");
   auto max_abs_distance = getInput<double>("max_abs_distance");
+  auto avoid_collisions = getInput<bool>("avoid_collisions");
   if (!planning_group || !tcp_link || !distance || 
     !velocity_scale || !acceleration_scale ||
-    !eef_step || !min_fraction || !max_abs_distance) {
+    !eef_step || !min_fraction || !max_abs_distance ||
+    !avoid_collisions) {
     RCLCPP_ERROR(rclcpp::get_logger("MoveTcpRelativeZNode"), "Missing required input port");
     return BT::NodeStatus::FAILURE;
   }
@@ -48,6 +51,7 @@ BT::NodeStatus MoveTcpRelativeZNode::onStart() {
   eef_step_ = eef_step.value();
   min_fraction_ = min_fraction.value();
   max_abs_distance_m_ = max_abs_distance.value();
+  avoid_collisions_ = avoid_collisions.value();
   if (std::abs(distance_m_) > max_abs_distance_m_) {
     RCLCPP_ERROR(rclcpp::get_logger("MoveTcpRelativeZNode"), 
       "Requested TCP Z distance %.6f m exceeds max_abs_distance %.6f m",
@@ -67,6 +71,7 @@ BT::NodeStatus MoveTcpRelativeZNode::onStart() {
     acceleration_scale_,
     eef_step_,
     min_fraction_,
+    avoid_collisions_,
     error_msg)) {
     RCLCPP_ERROR(rclcpp::get_logger("MoveTcpRelativeZNode"), "%s", error_msg.c_str());
     return BT::NodeStatus::FAILURE;

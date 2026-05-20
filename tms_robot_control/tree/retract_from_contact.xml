@@ -1,0 +1,31 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="RetractFromContactTask">
+    <Sequence name="retract_from_contact_seq">
+      <ReportStatus
+        name="retract_contact_start"
+        message="Starting contact recovery retract"/>
+      <SetAllowedCollision
+        name="allow_iccoil_dummy_head_collision"
+        link1="iccoil"
+        link2="dummy_head"
+        allowed="true"/>
+      <ReportStatus
+        name="retract_tcp_start"
+        message="Retracting TCP from dummy head contact"/>
+      <MoveTcpRelativeZ
+        name="retract_tcp_z"
+        planning_group="ur_arm"
+        tcp_link="ur10e_tcp"
+        distance="-0.050"
+        velocity_scale="0.01"
+        acceleration_scale="0.01"
+        eef_step="0.0001"
+        min_fraction="0.90"
+        max_abs_distance="0.100"
+        avoid_collisions="true"/>
+      <ReportStatus
+        name="retract_contact_done"
+        message="Contact recovery retract complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

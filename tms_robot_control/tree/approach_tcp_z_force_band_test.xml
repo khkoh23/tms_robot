@@ -7,6 +7,11 @@
       <ReportStatus
         name="force_approach_start"
         message="Starting TCP force-band approach"/>
+      <SetAllowedCollision
+        name="allow_iccoil_dummy_head_collision"
+        link1="iccoil"
+        link2="dummy_head"
+        allowed="true"/>
       <ApproachTcpZForceBand
         name="approach_force_band"
         planning_group="ur_arm"
@@ -19,7 +24,10 @@
         force_freshness_sec="0.20"
         force_wait_timeout_sec="5.0"
         velocity_scale="0.01"
-        acceleration_scale="0.01"/>
+        acceleration_scale="0.01"
+        eef_step="0.0001"
+        min_fraction="0.90"
+        avoid_collisions="true"/>
       <ReportStatus
         name="force_approach_done"
         message="TCP force-band approach complete"/>

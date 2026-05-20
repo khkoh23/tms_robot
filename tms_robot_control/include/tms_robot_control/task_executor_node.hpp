@@ -42,6 +42,7 @@ private:
   void publish_log(const std::string & message);
   std::string status_to_string(BT::NodeStatus status) const;
   std::string node_type_to_string(BT::NodeType type) const;
+  void restore_contact_collision_allowance();
   rclcpp_action::Server<ExecuteTask>::SharedPtr action_server_;
   rclcpp::Publisher<tms_robot_interfaces::msg::BtNodeStatus>::SharedPtr bt_node_pub_;
   rclcpp::Publisher<tms_robot_interfaces::msg::BtState>::SharedPtr bt_state_pub_;

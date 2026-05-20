@@ -17,6 +17,9 @@
         eef_step="0.0001"
         min_fraction="0.90"
         max_abs_distance="0.05"/>
+      <ReportStatus
+        name="tcp_z_done"
+        message="Moved to TCP relative +Z by 0.5 mm"/>
     </Sequence>
   </BehaviorTree>
 </root>

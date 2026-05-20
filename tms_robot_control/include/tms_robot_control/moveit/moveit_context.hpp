@@ -6,7 +6,10 @@
 #include <string>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
+#include <moveit/planning_scene_interface/planning_scene_interface.hpp>
 #include <moveit/utils/moveit_error_code.hpp>
+#include <moveit_msgs/msg/allowed_collision_matrix.hpp>
+#include <moveit_msgs/srv/get_planning_scene.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 class MoveItContext {
@@ -54,12 +57,21 @@ public:
     double acceleration_scale,
     double eef_step,
     double min_fraction,
+    bool avoid_collisions,
+    std::string & error_msg);
+  bool getCurrentAllowedCollisionMatrix(moveit_msgs::msg::AllowedCollisionMatrix & acm,
+    std::string & error_msg);
+  bool setAllowedCollision(const std::string & link1, 
+    const std::string & link2,
+    bool allowed,
     std::string & error_msg);
 
 private:
   moveit::planning_interface::MoveGroupInterface * getMoveGroup(const std::string & planning_group, std::string & error_msg);
   rclcpp::Node::SharedPtr node_;
   std::map<std::string, std::unique_ptr<moveit::planning_interface::MoveGroupInterface>> move_groups_;
+  std::unique_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_;
+  rclcpp::Client<moveit_msgs::srv::GetPlanningScene>::SharedPtr get_planning_scene_client_;
   moveit::planning_interface::MoveGroupInterface::Plan active_plan_;
   std::future<moveit::core::MoveItErrorCode> execution_future_;
   std::string active_planning_group_;

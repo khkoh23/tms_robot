@@ -2,10 +2,15 @@
 
 #include <cmath>
 #include <exception>
+#include <chrono>
+#include <future>
 #include <Eigen/Geometry>
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
 #include <moveit/robot_state/robot_state.hpp>
 #include <moveit_msgs/msg/robot_trajectory.hpp>
+#include <moveit_msgs/msg/allowed_collision_entry.hpp>
+#include <moveit_msgs/msg/planning_scene.hpp>
+#include <moveit_msgs/msg/planning_scene_components.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
@@ -251,14 +256,16 @@ bool MoveItContext::startMoveTcpRelativeZ(const std::string & planning_group,
   double acceleration_scale,
   double eef_step,
   double min_fraction,
+  bool avoid_collisions,
   std::string & error_msg) {
   auto * move_group = getMoveGroup(planning_group, error_msg);
   if (!move_group) {
     return false;
   }
-  RCLCPP_INFO(node_->get_logger(), "Planning TCP relative Z motion for link '%s': distance=%.6f m",
+  RCLCPP_INFO(node_->get_logger(), "Planning TCP relative Z motion for link '%s': distance=%.6f m, avoid_collisions=%s",
     tcp_link.c_str(),
-    distance_m);
+    distance_m,
+    avoid_collisions ? "true" : "false");
   try {
     move_group->clearPoseTargets();
     if (!tcp_link.empty()) {
@@ -311,7 +318,7 @@ bool MoveItContext::startMoveTcpRelativeZ(const std::string & planning_group,
     std::vector<geometry_msgs::msg::Pose> waypoints;
     waypoints.push_back(target_pose);
     moveit_msgs::msg::RobotTrajectory trajectory;
-    const double fraction = move_group->computeCartesianPath(waypoints, eef_step, trajectory);
+    const double fraction = move_group->computeCartesianPath(waypoints, eef_step, trajectory, avoid_collisions);
     if (fraction < min_fraction) {
       error_msg = "Cartesian TCP Z path fraction too low: " +
         std::to_string(fraction) +
@@ -336,7 +343,119 @@ bool MoveItContext::startMoveTcpRelativeZ(const std::string & planning_group,
   }
 }
 
+bool MoveItContext::getCurrentAllowedCollisionMatrix(moveit_msgs::msg::AllowedCollisionMatrix & acm,
+  std::string & error_msg) {
+  if (!get_planning_scene_client_) {
+    error_msg = "get_planning_scene client is not initialized";
+    return false;
+  }
+  if (!get_planning_scene_client_->wait_for_service(std::chrono::seconds(2))) {
+    error_msg = "get_planning_scene service is not available";
+    return false;
+  }
+  auto request = std::make_shared<moveit_msgs::srv::GetPlanningScene::Request>();
+  request->components.components = moveit_msgs::msg::PlanningSceneComponents::ALLOWED_COLLISION_MATRIX;
+  auto future = get_planning_scene_client_->async_send_request(request);
+  const auto status = future.wait_for(std::chrono::seconds(2));
+  if (status != std::future_status::ready) {
+    error_msg = "Timed out waiting for get_planning_scene response";
+    return false;
+  }
+  try {
+    const auto response = future.get();
+    acm = response->scene.allowed_collision_matrix;
+    return true;
+  }
+  catch (const std::exception & e) {
+    error_msg = "Exception while getting planning scene ACM: " + std::string(e.what());
+    return false;
+  }
+}
+
+bool MoveItContext::setAllowedCollision(const std::string & link1,
+  const std::string & link2,
+  bool allowed,
+  std::string & error_msg) {
+  if (link1.empty() || link2.empty()) {
+    error_msg = "Allowed collision link names must not be empty";
+    return false;
+  }
+  if (link1 == link2) {
+    error_msg = "Allowed collision links must be different";
+    return false;
+  }
+  if (!planning_scene_interface_) {
+    error_msg = "PlanningSceneInterface is not initialized";
+    return false;
+  }
+  moveit_msgs::msg::AllowedCollisionMatrix acm;
+  if (!getCurrentAllowedCollisionMatrix(acm, error_msg)) {
+    return false;
+  }
+  auto find_index = [&acm](const std::string & name) -> int {
+    for (std::size_t i = 0; i < acm.entry_names.size(); ++i) {
+      if (acm.entry_names[i] == name) {
+        return static_cast<int>(i); 
+      }
+    }
+    return -1;
+  };
+  auto ensure_square_matrix = [&acm]() {
+    const std::size_t n = acm.entry_names.size();
+    acm.entry_values.resize(n);
+    for (auto & row : acm.entry_values) {
+      row.enabled.resize(n, false);
+    }
+  };
+  auto add_link_if_missing = [&acm, &find_index, &ensure_square_matrix] (
+    const std::string & name) -> int {
+    int index = find_index(name);
+    if (index >= 0) {
+      return index;
+    }
+    acm.entry_names.push_back(name);
+    // Add one column to all existing rows.
+    for (auto & row : acm.entry_values) {
+      row.enabled.push_back(false);
+    }
+    // Add new row.
+    moveit_msgs::msg::AllowedCollisionEntry new_entry;
+    new_entry.enabled.resize(acm.entry_names.size(), false);
+    acm.entry_values.push_back(new_entry);
+    ensure_square_matrix();
+    return static_cast<int>(acm.entry_names.size() - 1); 
+  };
+  ensure_square_matrix();
+  const int i = add_link_if_missing(link1);
+  const int j = add_link_if_missing(link2);
+  ensure_square_matrix();
+  if (i < 0 || j < 0) {
+    error_msg = "Failed to find or add ACM link indices";
+    return false;
+  }
+  acm.entry_values[static_cast<std::size_t>(i)].enabled[static_cast<std::size_t>(j)] = allowed;
+  acm.entry_values[static_cast<std::size_t>(j)].enabled[static_cast<std::size_t>(i)] = allowed;
+  // Keep self-collision disabled entries false.
+  acm.entry_values[static_cast<std::size_t>(i)].enabled[static_cast<std::size_t>(i)] = false;
+  acm.entry_values[static_cast<std::size_t>(j)].enabled[static_cast<std::size_t>(j)] = false;
+  moveit_msgs::msg::PlanningScene planning_scene_msg;
+  planning_scene_msg.is_diff = true;
+  planning_scene_msg.allowed_collision_matrix = acm;
+  const bool ok = planning_scene_interface_->applyPlanningScene(planning_scene_msg);
+  if (!ok) {
+    error_msg = "Failed to apply allowed collision update for '" + link1 + "' and '" + link2 + "'";
+    return false;
+  }
+  RCLCPP_INFO(node_->get_logger(), "Allowed collision %s between '%s' and '%s' while preserving existing ACM",
+    allowed ? "ENABLED" : "DISABLED",
+    link1.c_str(),
+    link2.c_str());
+  return true;
+}
+
 MoveItContext::MoveItContext(rclcpp::Node::SharedPtr node) : node_(node) {
+  planning_scene_interface_ = std::make_unique<moveit::planning_interface::PlanningSceneInterface>();
+  get_planning_scene_client_ = node_->create_client<moveit_msgs::srv::GetPlanningScene>("get_planning_scene");
 }
 
 moveit::planning_interface::MoveGroupInterface * MoveItContext::getMoveGroup(const std::string & planning_group, std::string & error_msg) { 
