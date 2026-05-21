@@ -23,7 +23,10 @@ public:
   ~RosBridge();
   rclcpp::Node::SharedPtr node() const { return node_; }
   void zeroFTS();
-  void startTask(const QString & task_name, double tcp_offset_z_mm, double treatment_duration_sec);
+  void startTask(const QString & task_name, 
+    double tcp_offset_z_mm, 
+    double treatment_duration_sec,
+    double min_distance_mm);
   void cancelTask();
 signals:
   void taskStateUpdated(const QString & task_name, 
@@ -36,6 +39,7 @@ signals:
   void logMessage(const QString & msg);
   void forceUpdated(const QString & force);
   void distanceUpdated(const QString & distance);
+  void treatmentStatusUpdated(const QString & status);
 private:
   rclcpp::Node::SharedPtr node_;
   rclcpp_action::Client<ExecuteTask>::SharedPtr action_client_;
@@ -46,4 +50,5 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr bt_log_sub_;
   rclcpp::Subscription<geometry_msgs::msg::WrenchStamped>::SharedPtr force_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr distance_sub_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr treatment_status_sub_;
 };

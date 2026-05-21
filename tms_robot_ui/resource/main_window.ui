@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1370</width>
-    <height>872</height>
+    <height>932</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -145,6 +145,39 @@
               </layout>
              </item>
              <item>
+              <layout class="QHBoxLayout" name="distance_guard_layout">
+               <item>
+                <widget class="QLabel" name="distance_guard_label">
+                 <property name="text">
+                  <string>UC4 Min Distance</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="distance_guard_spinbox">
+                 <property name="suffix">
+                  <string> mm</string>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="minimum">
+                  <double>25.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>150.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>63.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
               <widget class="QPushButton" name="start_button">
                <property name="text">
                 <string>Start Task</string>
@@ -189,6 +222,13 @@
               <widget class="QLabel" name="active_node_label">
                <property name="text">
                 <string>Active Node: -</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="treatment_status_label">
+               <property name="text">
+                <string>Treatment: -</string>
                </property>
               </widget>
              </item>

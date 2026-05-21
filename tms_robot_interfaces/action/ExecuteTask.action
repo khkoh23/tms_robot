@@ -1,6 +1,8 @@
 string task_name
 float64 tcp_offset_z_m
 float64 treatment_duration_sec
+bool enable_distance_guard
+float64 min_distance_m
 
 ---
 bool success

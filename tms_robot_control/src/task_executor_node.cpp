@@ -94,7 +94,11 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   cancel_requested_ = false;
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
-  if (!load_tree_for_task(goal->task_name, goal->tcp_offset_z_m, goal->treatment_duration_sec)) {
+  if (!load_tree_for_task(goal->task_name, 
+    goal->tcp_offset_z_m, 
+    goal->treatment_duration_sec, 
+    goal->enable_distance_guard, 
+    goal->min_distance_m)) {
     restore_contact_collision_allowance();
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
@@ -167,7 +171,11 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   goal_handle->abort(result);
 }
 
-bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double tcp_offset_z_m, double treatment_duration_sec) {
+bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, 
+  double tcp_offset_z_m, 
+  double treatment_duration_sec, 
+  bool enable_distance_guard,
+  double min_distance_m) {
   const auto xml_path = task_xml_path(task_name);
   if (xml_path.empty()) {
     RCLCPP_ERROR(get_logger(), "Unknown task name: %s", task_name.c_str());
@@ -186,6 +194,8 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name, double 
     blackboard->set<rclcpp::Node::SharedPtr>("ros_node", this->shared_from_this());
     contact_recovery_required_.store(false);
     blackboard->set<double>("treatment_duration_sec", treatment_duration_sec);
+    blackboard->set<bool>("enable_distance_guard", enable_distance_guard);
+    blackboard->set<double>("min_distance_m", min_distance_m);
     blackboard->set<std::atomic<bool> *>("contact_recovery_required", &contact_recovery_required_);
     blackboard->set<double>("tcp_offset_z_m", tcp_offset_z_m);
     if (!moveit_context_) {

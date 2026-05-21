@@ -27,7 +27,11 @@
         acceleration_scale="0.01"
         eef_step="0.0001"
         min_fraction="0.90"
-        avoid_collisions="true"/>
+        avoid_collisions="true"
+        enable_distance_guard="true"
+        min_distance_key="min_distance_m"
+        distance_freshness_sec="0.20"
+        recovery_retract_distance="-0.050"/>
       <ReportStatus
         name="treatment_hold_start"
         message="Starting active force-band treatment hold"/>
@@ -46,7 +50,10 @@
         velocity_scale="0.01"
         acceleration_scale="0.01"
         eef_step="0.0001"
-        min_fraction="0.90"/>
+        min_fraction="0.90"
+        enable_distance_guard="true"
+        min_distance_key="min_distance_m"
+        distance_freshness_sec="0.20"/>
       <SetAllowedCollision
         name="restore_iccoil_dummy_head_collision"
         link1="iccoil"

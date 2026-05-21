@@ -36,6 +36,11 @@ RosBridge::RosBridge(rclcpp::Node::SharedPtr node, QObject * parent) : QObject(p
       emit distanceUpdated(
         QString::number(msg->data*1000, 'f', 1)); // Convert m to mm
     });
+  treatment_status_sub_ = node_->create_subscription<std_msgs::msg::String>(
+    "treatment_status", 10, [this] (std_msgs::msg::String::SharedPtr msg) {
+    emit treatmentStatusUpdated(
+      QString::fromStdString(msg->data));
+  });
 }
 
 RosBridge::~RosBridge() = default;
@@ -71,7 +76,7 @@ void RosBridge::zeroFTS() {
   emit logMessage("Zeroing FTS300-S ...");
 }
 
-void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm, double treatment_duration_sec) {
+void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm, double treatment_duration_sec, double min_distance_mm) {
   if (!action_client_->wait_for_action_server(std::chrono::seconds(2))) {
     emit logMessage("ExecuteTask action server not available");
     return;
@@ -80,8 +85,11 @@ void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm, dou
   goal.task_name = task_name.toStdString();
   goal.tcp_offset_z_m = tcp_offset_z_mm / 1000.0;
   goal.treatment_duration_sec = treatment_duration_sec;
+  goal.enable_distance_guard = true;
+  goal.min_distance_m = min_distance_mm / 1000.0;
   emit logMessage(QString("TCP Z offset: %1 mm").arg(tcp_offset_z_mm, 0, 'f', 1));
   emit logMessage(QString("Treatment time: %1 sec").arg(treatment_duration_sec, 0, 'f', 0));
+  emit logMessage(QString("UC4 min distance: %1 mm").arg(min_distance_mm, 0, 'f', 0));
   auto options = rclcpp_action::Client<ExecuteTask>::SendGoalOptions();
   options.goal_response_callback =
     [this](GoalHandleExecuteTask::SharedPtr handle) {

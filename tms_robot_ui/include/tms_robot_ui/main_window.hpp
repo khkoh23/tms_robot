@@ -55,6 +55,7 @@ private slots:
   void onLogMessage(const QString & msg);
   void onForceUpdated(const QString & msg);
   void onDistanceUpdated(const QString & msg);
+  void onTreatmentUpdated(const QString & msg);
 private:
   void buildUi();
   void connectSignals();
@@ -77,6 +78,8 @@ private:
   QComboBox * task_selector_;
   QDoubleSpinBox * tcp_offset_spinbox_;
   QDoubleSpinBox * treatment_duration_spinbox_;
+  QDoubleSpinBox * distance_guard_spinbox_;
+  QLabel * treatment_status_label_;
   QPushButton * zero_button_;
   QPushButton * start_button_;
   QPushButton * cancel_button_;

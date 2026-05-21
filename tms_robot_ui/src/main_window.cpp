@@ -33,6 +33,8 @@ void MainWindow::buildUi() {
   task_selector_ = ui_->task_selector;
   tcp_offset_spinbox_ = ui_->tcp_offset_spinbox;
   treatment_duration_spinbox_ = ui_->treatment_duration_spinbox;
+  distance_guard_spinbox_ = ui_->distance_guard_spinbox;
+  treatment_status_label_ = ui_->treatment_status_label;
   zero_button_ = ui_->zero_button;
   start_button_ = ui_->start_button;
   cancel_button_ = ui_->cancel_button;
@@ -85,6 +87,7 @@ void MainWindow::connectSignals() {
   connect(ros_bridge_, &RosBridge::logMessage, this, &MainWindow::onLogMessage);
   connect(ros_bridge_, &RosBridge::forceUpdated, this, &MainWindow::onForceUpdated);
   connect(ros_bridge_, &RosBridge::distanceUpdated, this, &MainWindow::onDistanceUpdated);
+  connect(ros_bridge_, &RosBridge::treatmentStatusUpdated, this, &MainWindow::onTreatmentUpdated);
 }
 
 QString MainWindow::selectedTaskName() const {
@@ -141,7 +144,11 @@ void MainWindow::onZeroClicked() {
 void MainWindow::onStartClicked() {
   const double tcp_offset_z_mm = tcp_offset_spinbox_->value();
   const double treatment_duration_sec = treatment_duration_spinbox_->value();
-  ros_bridge_->startTask(selectedTaskName(), tcp_offset_z_mm, treatment_duration_sec);
+  const double min_distance_mm = distance_guard_spinbox_->value();
+  ros_bridge_->startTask(selectedTaskName(),
+    tcp_offset_z_mm,
+    treatment_duration_sec,
+    min_distance_mm);
 }
 
 void MainWindow::onCancelClicked() {
@@ -179,6 +186,10 @@ void MainWindow::onForceUpdated(const QString & msg) {
 
 void MainWindow::onDistanceUpdated(const QString & msg) {
   distance_label_->setText("Distance sensor: " + msg + " mm");
+}
+
+void MainWindow::onTreatmentUpdated(const QString & msg) {
+  treatment_status_label_->setText("Treatment: " + msg);
 }
 
 void MainWindow::loadTreeIntoWidget(const QString & xml_path) {

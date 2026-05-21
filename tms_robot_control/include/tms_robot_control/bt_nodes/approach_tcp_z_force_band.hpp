@@ -13,9 +13,10 @@ public:
   void onHalted() override;
 
 private:
-  enum class StepState {
-    IDLE, MOVING
-  };
+  enum class StepState { IDLE, MOVING, RECOVERY_RETRACTING };
+  bool startTcpStep(double step);
+  bool startRecoveryRetract(const std::string & reason);
+  BT::NodeStatus pollActiveMotion();
   std::string planning_group_;
   std::string tcp_link_;
   double min_force_z_{-8.0};
@@ -30,6 +31,11 @@ private:
   double eef_step_{0.0001};
   double min_fraction_{0.90};
   bool avoid_collisions_{true};
+  bool enable_distance_guard_{true};
+  std::string min_distance_key_{"min_distance_m"};
+  double min_distance_m_{0.063};
+  double distance_freshness_sec_{0.20};
+  double recovery_retract_distance_{-0.050};
   double total_motion_abs_{0.0};
   int step_count_{0};
   StepState step_state_{StepState::IDLE};
