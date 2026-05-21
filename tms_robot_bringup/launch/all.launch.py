@@ -81,5 +81,12 @@ def generate_launch_description():
                 'ftdi_id': 'fts',
                 'frame_id': 'robotiq_ft_frame_id',
             }]
+        ),
+
+        Node(
+            package='tms_robot_bringup',
+            executable='tcp_pose_publisher',
+            name='tcp_pose_publisher',
+            output='screen'
         )
     ])
