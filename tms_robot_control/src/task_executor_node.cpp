@@ -15,6 +15,8 @@
 #include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
 #include "tms_robot_control/bt_nodes/move_to_tcp_target_pose_offset.hpp"
 #include "tms_robot_control/bt_nodes/report_status.hpp"
+#include "tms_robot_control/bt_nodes/sensor_snapshot.hpp"
+#include "tms_robot_control/bt_nodes/sensor_watch.hpp"
 #include "tms_robot_control/bt_nodes/set_allowed_collision.hpp"
 #include "tms_robot_control/bt_nodes/treatment_force_band_hold.hpp"
 #include "tms_robot_control/bt_nodes/verify_named_target_reached.hpp"
@@ -61,6 +63,8 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
   factory_.registerNodeType<MoveTcpRelativeZNode>("MoveTcpRelativeZ");
   factory_.registerNodeType<ApproachTcpZForceBandNode>("ApproachTcpZForceBand");
+  factory_.registerNodeType<SensorSnapshotNode>("SensorSnapshot");
+  factory_.registerNodeType<SensorWatchNode>("SensorWatch");
   factory_.registerNodeType<SetAllowedCollisionNode>("SetAllowedCollision");
   factory_.registerNodeType<TreatmentForceBandHoldNode>("TreatmentForceBandHold");
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
@@ -274,6 +278,12 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "treatment_inputs_fresh_test") {
     return share_dir + "/tree/treatment_inputs_fresh_test.xml"; 
+  }
+  if (task_name == "sensor_snapshot_test") {
+    return share_dir + "/tree/sensor_snapshot_test.xml"; 
+  }
+  if (task_name == "sensor_watch_test") {
+    return share_dir + "/tree/sensor_watch_test.xml"; 
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

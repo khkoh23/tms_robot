@@ -1,0 +1,21 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="SensorSnapshotTest">
+    <Sequence name="sensor_snapshot_test_seq">
+      <ReportStatus
+        name="snapshot_start"
+        message="Taking sensor snapshot"/>
+      <SensorSnapshot
+        name="sensor_snapshot"
+        require_force="true"
+        require_distance="true"
+        require_target_pose="true"
+        force_freshness_sec="0.20"
+        distance_freshness_sec="0.20"
+        target_pose_freshness_sec="1.00"
+        status_topic="treatment_status"/>
+      <ReportStatus
+        name="snapshot_done"
+        message="Sensor snapshot complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

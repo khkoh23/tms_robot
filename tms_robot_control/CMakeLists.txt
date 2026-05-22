@@ -31,6 +31,8 @@ set(BT_NODE_SOURCES
   src/bt_nodes/move_to_frame_offset_pose.cpp
   src/bt_nodes/move_to_tcp_target_pose_offset.cpp
   src/bt_nodes/report_status.cpp
+  src/bt_nodes/sensor_snapshot.cpp
+  src/bt_nodes/sensor_watch.cpp
   src/bt_nodes/set_allowed_collision.cpp
   src/bt_nodes/treatment_force_band_hold.cpp
   src/bt_nodes/verify_named_target_reached.cpp

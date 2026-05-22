@@ -57,6 +57,8 @@ void MainWindow::buildUi() {
   task_selector_->addItem("retract_from_contact");
   task_selector_->addItem("contact_treatment_test");
   task_selector_->addItem("treatment_inputs_fresh_test");
+  task_selector_->addItem("sensor_snapshot_test");
+  task_selector_->addItem("sensor_watch_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -133,6 +135,12 @@ QString MainWindow::selectedTreePath() const {
   }
   if (selectedTaskName() == "treatment_inputs_fresh_test") {
     return share_dir + "/tree/treatment_inputs_fresh_test.xml"; 
+  }
+  if (selectedTaskName() == "sensor_snapshot_test") {
+    return share_dir + "/tree/sensor_snapshot_test.xml";
+  }
+  if (selectedTaskName() == "sensor_watch_test") {
+    return share_dir + "/tree/sensor_watch_test.xml"; 
   }
   return "";
 }

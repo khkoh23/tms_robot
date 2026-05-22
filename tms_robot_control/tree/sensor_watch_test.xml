@@ -1,0 +1,23 @@
+<root BTCPP_format="4">
+  <BehaviorTree ID="SensorWatchTest">
+    <Sequence name="sensor_watch_test_seq">
+      <ReportStatus
+        name="watch_start"
+        message="Starting sensor watch"/>
+      <SensorWatch 
+        name="sensor_watch"     
+        duration_sec="10.0"
+        publish_period_sec="1.0"
+        watch_force="true"
+        watch_distance="true"
+        watch_target_pose="true"
+        force_freshness_sec="0.20"
+        distance_freshness_sec="0.20"
+        target_pose_freshness_sec="1.00"
+        status_topic="treatment_status"/>
+      <ReportStatus
+        name="watch_done"
+        message="Sensor watch complete"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
