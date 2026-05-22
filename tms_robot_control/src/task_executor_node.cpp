@@ -9,6 +9,7 @@
 #include <thread>
 #include "tms_robot_control/bt_nodes/approach_tcp_z_force_band.hpp"
 #include "tms_robot_control/bt_nodes/check_system_ready.hpp"
+#include "tms_robot_control/bt_nodes/check_treatment_inputs_fresh.hpp"
 #include "tms_robot_control/bt_nodes/move_arm_named_target.hpp"
 #include "tms_robot_control/bt_nodes/move_tcp_relative_z.hpp"
 #include "tms_robot_control/bt_nodes/move_to_frame_offset_pose.hpp"
@@ -54,6 +55,7 @@ TaskExecutorNode::TaskExecutorNode() : Node("robot_task_executor") {
 void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<WaitNode>("Wait");
   factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
+  factory_.registerNodeType<CheckTreatmentInputsFreshNode>("CheckTreatmentInputsFresh");
   factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");  
   factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
   factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
@@ -63,8 +65,8 @@ void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<TreatmentForceBandHoldNode>("TreatmentForceBandHold");
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
   factory_.registerNodeType<WaitForTargetPoseNode>("WaitForTargetPose");
-  factory_.registerBuilder<ReportStatusNode>("ReportStatus", (const std::string & name, const BT::NodeConfig & config) {
-    return std::make_unique<ReportStatusNode>(name, config, (const std::string & msg) {
+  factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
+    return std::make_unique<ReportStatusNode>(name, config, [this](const std::string & msg) {
       publish_log(msg);
       RCLCPP_INFO(this->get_logger(), "%s", msg.c_str()); 
     });
@@ -135,7 +137,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     const auto status = tree_.tickOnce();
     publish_tree_status();
     std::string active_node;
-    BT::applyRecursiveVisitor(tree_.rootNode(), (BT::TreeNode * node) {
+    BT::applyRecursiveVisitor(tree_.rootNode(), [&] (BT::TreeNode * node) {
       const auto node_type = node->type();
       const bool is_leaf = node_type == BT::NodeType::ACTION || node_type == BT::NodeType::CONDITION;
       if (active_node.empty() && node->status() == BT::NodeStatus::RUNNING && is_leaf) {
@@ -226,7 +228,7 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
 }
 
 void TaskExecutorNode::publish_tree_status() {
-  BT::applyRecursiveVisitor(tree_.rootNode(), (BT::TreeNode * node) {
+  BT::applyRecursiveVisitor(tree_.rootNode(), [&] (BT::TreeNode * node) {
     const auto name = node->name();
     const auto status = status_to_string(node->status());
     auto it = last_status_.find(name);
@@ -269,6 +271,9 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "contact_treatment_test") {
     return share_dir + "/tree/contact_treatment_test.xml";
+  }
+  if (task_name == "treatment_inputs_fresh_test") {
+    return share_dir + "/tree/treatment_inputs_fresh_test.xml"; 
   }
   if (task_name == "inspect") {
     return share_dir + "/tree/inspect_tree.xml";

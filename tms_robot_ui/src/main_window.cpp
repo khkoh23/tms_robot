@@ -56,6 +56,7 @@ void MainWindow::buildUi() {
   task_selector_->addItem("approach_tcp_z_force_band_test");
   task_selector_->addItem("retract_from_contact");
   task_selector_->addItem("contact_treatment_test");
+  task_selector_->addItem("treatment_inputs_fresh_test");
   bt_tree_widget_->setColumnCount(2);
   bt_tree_widget_->setHeaderLabels({"BT Node", "Status"});
   bt_tree_widget_->header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -129,6 +130,9 @@ QString MainWindow::selectedTreePath() const {
   }
   if (selectedTaskName() == "contact_treatment_test") {
     return share_dir + "/tree/contact_treatment_test.xml";
+  }
+  if (selectedTaskName() == "treatment_inputs_fresh_test") {
+    return share_dir + "/tree/treatment_inputs_fresh_test.xml"; 
   }
   return "";
 }

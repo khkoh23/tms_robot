@@ -25,6 +25,7 @@ include_directories(include)
 set(BT_NODE_SOURCES
   src/bt_nodes/approach_tcp_z_force_band.cpp
   src/bt_nodes/check_system_ready.cpp
+  src/bt_nodes/check_treatment_inputs_fresh.cpp
   src/bt_nodes/move_arm_named_target.cpp
   src/bt_nodes/move_tcp_relative_z.cpp
   src/bt_nodes/move_to_frame_offset_pose.cpp
