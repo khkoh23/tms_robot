@@ -1,5 +1,6 @@
 #include "tms_robot_control/task_executor_node.hpp"
 
+#include <algorithm>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <chrono>
 #include <fstream>
@@ -43,6 +44,7 @@ TaskExecutorNode::TaskExecutorNode() : Node("robot_task_executor") {
   bt_node_pub_ = create_publisher<tms_robot_interfaces::msg::BtNodeStatus>("bt_node_status", 10);
   bt_state_pub_ = create_publisher<tms_robot_interfaces::msg::BtState>("bt_state", 10);
   bt_log_pub_ = create_publisher<std_msgs::msg::String>("bt_log", 10);
+  treatment_status_pub_ = create_publisher<std_msgs::msg::String>("treatment_status", 10);
   action_server_ = rclcpp_action::create_server<ExecuteTask>(this, "execute_task", 
     std::bind(&TaskExecutorNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2), 
     std::bind(&TaskExecutorNode::handle_cancel, this, std::placeholders::_1), 
@@ -52,21 +54,21 @@ TaskExecutorNode::TaskExecutorNode() : Node("robot_task_executor") {
 void TaskExecutorNode::register_bt_nodes() {
   factory_.registerNodeType<WaitNode>("Wait");
   factory_.registerNodeType<CheckSystemReadyNode>("CheckSystemReady");
-  factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");
-  factory_.registerNodeType<MoveTcpRelativeZNode>("MoveTcpRelativeZ");
+  factory_.registerNodeType<MoveArmNamedTargetNode>("MoveArmNamedTarget");  
   factory_.registerNodeType<MoveToFrameOffsetPoseNode>("MoveToFrameOffsetPose");
   factory_.registerNodeType<MoveToTcpTargetPoseOffsetNode>("MoveToTcpTargetPoseOffset");
+  factory_.registerNodeType<MoveTcpRelativeZNode>("MoveTcpRelativeZ");
   factory_.registerNodeType<ApproachTcpZForceBandNode>("ApproachTcpZForceBand");
-  factory_.registerBuilder<ReportStatusNode>("ReportStatus", [this](const std::string & name, const BT::NodeConfig & config) {
-    return std::make_unique<ReportStatusNode>(name, config, [this](const std::string & msg) {
-      publish_log(msg);
-      RCLCPP_INFO(this->get_logger(), "%s", msg.c_str()); 
-    });
-  });
   factory_.registerNodeType<SetAllowedCollisionNode>("SetAllowedCollision");
   factory_.registerNodeType<TreatmentForceBandHoldNode>("TreatmentForceBandHold");
   factory_.registerNodeType<VerifyNamedTargetReachedNode>("VerifyNamedTargetReached");
   factory_.registerNodeType<WaitForTargetPoseNode>("WaitForTargetPose");
+  factory_.registerBuilder<ReportStatusNode>("ReportStatus", (const std::string & name, const BT::NodeConfig & config) {
+    return std::make_unique<ReportStatusNode>(name, config, (const std::string & msg) {
+      publish_log(msg);
+      RCLCPP_INFO(this->get_logger(), "%s", msg.c_str()); 
+    });
+  });
 }
 
 rclcpp_action::GoalResponse TaskExecutorNode::handle_goal(const rclcpp_action::GoalUUID &, std::shared_ptr<const ExecuteTask::Goal> goal) {
@@ -92,13 +94,15 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   TaskRunningGuard running_guard(task_running_);
   const auto goal = goal_handle->get_goal();
   cancel_requested_ = false;
+  double tcp_offset_z_m = clamp_double(goal->tcp_offset_z_m, kMinTcpOffsetZ, kMaxTcpOffsetZ, "tcp_offset_z_m");
+  double treatment_duration_sec = clamp_double(goal->treatment_duration_sec, kMinTreatmentDurationSec, kMaxTreatmentDurationSec, "treatment_duration_sec");
+  double min_distance_m = clamp_double(goal->min_distance_m, kMinDistanceGuardM, kMaxDistanceGuardM, "min_distance_m");
+  const bool enable_distance_guard = goal->enable_distance_guard;
+  clear_treatment_status();
+  publish_task_parameter_summary(goal->task_name, tcp_offset_z_m, treatment_duration_sec, enable_distance_guard, min_distance_m);
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
-  if (!load_tree_for_task(goal->task_name, 
-    goal->tcp_offset_z_m, 
-    goal->treatment_duration_sec, 
-    goal->enable_distance_guard, 
-    goal->min_distance_m)) {
+  if (!load_tree_for_task(goal->task_name, tcp_offset_z_m, treatment_duration_sec, enable_distance_guard, min_distance_m)) {
     restore_contact_collision_allowance();
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
@@ -131,7 +135,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
     const auto status = tree_.tickOnce();
     publish_tree_status();
     std::string active_node;
-    BT::applyRecursiveVisitor(tree_.rootNode(), [&](BT::TreeNode * node) {
+    BT::applyRecursiveVisitor(tree_.rootNode(), (BT::TreeNode * node) {
       const auto node_type = node->type();
       const bool is_leaf = node_type == BT::NodeType::ACTION || node_type == BT::NodeType::CONDITION;
       if (active_node.empty() && node->status() == BT::NodeStatus::RUNNING && is_leaf) {
@@ -190,14 +194,18 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
   buffer << in.rdbuf();
   try {
     auto blackboard = BT::Blackboard::create();
+    contact_recovery_required_.store(false);
+    {
+      std::lock_guard<std::mutex> lock(contact_collision_mutex_);
+      contact_collision_allowed_ = false;
+    }
     blackboard->set<std::atomic<bool> *>("cancel_requested", &cancel_requested_);
     blackboard->set<rclcpp::Node::SharedPtr>("ros_node", this->shared_from_this());
-    contact_recovery_required_.store(false);
+    blackboard->set<double>("tcp_offset_z_m", tcp_offset_z_m);
     blackboard->set<double>("treatment_duration_sec", treatment_duration_sec);
     blackboard->set<bool>("enable_distance_guard", enable_distance_guard);
     blackboard->set<double>("min_distance_m", min_distance_m);
     blackboard->set<std::atomic<bool> *>("contact_recovery_required", &contact_recovery_required_);
-    blackboard->set<double>("tcp_offset_z_m", tcp_offset_z_m);
     if (!moveit_context_) {
       moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
     }
@@ -218,7 +226,7 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
 }
 
 void TaskExecutorNode::publish_tree_status() {
-  BT::applyRecursiveVisitor(tree_.rootNode(), [&](BT::TreeNode * node) {
+  BT::applyRecursiveVisitor(tree_.rootNode(), (BT::TreeNode * node) {
     const auto name = node->name();
     const auto status = status_to_string(node->status());
     auto it = last_status_.find(name);
@@ -314,6 +322,137 @@ void TaskExecutorNode::publish_log(const std::string & message) {
   bt_log_pub_->publish(msg);
 }
 
+void TaskExecutorNode::clear_treatment_status() {
+  if (!treatment_status_pub_) {
+    return;
+  }
+  std_msgs::msg::String msg;
+  msg.data = "-";
+  treatment_status_pub_->publish(msg);
+}
+
+double TaskExecutorNode::clamp_double(double value, double min_value, double max_value, const std::string & name) {
+  if (value < min_value) {
+    RCLCPP_WARN(get_logger(), "Parameter '%s' value %.6f is below minimum %.6f. Clamping to %.6f.",
+      name.c_str(),
+      value,
+      min_value,
+      min_value);
+    return min_value;
+  }
+  if (value > max_value) {
+    RCLCPP_WARN(get_logger(), "Parameter '%s' value %.6f is above maximum %.6f. Clamping to %.6f.",
+      name.c_str(),
+      value,
+      max_value,
+      max_value);
+    return max_value;
+  }
+  return value;
+}
+
+void TaskExecutorNode::publish_task_parameter_summary(const std::string & task_name,
+  double tcp_offset_z_m,
+  double treatment_duration_sec,
+  bool enable_distance_guard,
+  double min_distance_m) {
+  std::ostringstream ss;
+  ss
+    << "Task parameters: "
+    << "task=" << task_name
+    << ", tcp_offset_z=" << tcp_offset_z_m * 1000.0 << " mm"
+    << ", treatment_duration=" << treatment_duration_sec << " sec"
+    << ", distance_guard=" << (enable_distance_guard ? "ON" : "OFF")
+    << ", min_distance=" << min_distance_m * 1000.0 << " mm";
+  const auto summary = ss.str();
+  RCLCPP_INFO(get_logger(), "%s", summary.c_str());
+  publish_log(summary);
+}
+
+bool TaskExecutorNode::set_contact_collision_allowed(bool allowed) {
+  if (!moveit_context_) {
+    RCLCPP_WARN(get_logger(), "Cannot set contact collision allowance: MoveItContext is null");
+    return false;
+  }
+  {
+    std::lock_guard<std::mutex> lock(contact_collision_mutex_);
+    // Important:
+    // If contact_recovery_required_ is true and we are disabling, do not skip.
+    // The XML SetAllowedCollision node may have enabled the ACM without updating this local executor-side bookkeeping flag.
+    const bool must_force_disable = !allowed && contact_recovery_required_.load();
+    if (contact_collision_allowed_ == allowed && !must_force_disable) {
+      RCLCPP_DEBUG(get_logger(), "Contact collision allowance already %s for iccoil/dummy_head",
+        allowed ? "enabled" : "disabled");
+      return true;
+    }
+  }
+  std::string error_msg;
+  const bool ok = moveit_context_->setAllowedCollision("iccoil", "dummy_head", allowed, error_msg);
+  if (!ok) {
+    RCLCPP_WARN(get_logger(), "Failed to set iccoil/dummy_head collision allowance to %s: %s",
+      allowed ? "true" : "false",
+      error_msg.c_str());
+    return false;
+  }
+  {
+    std::lock_guard<std::mutex> lock(contact_collision_mutex_);
+    contact_collision_allowed_ = allowed;
+  }
+  RCLCPP_INFO(get_logger(), "Contact collision allowance state updated: iccoil <-> dummy_head = %s",
+    allowed ? "true" : "false");
+  return true;
+}
+
+void TaskExecutorNode::restore_contact_collision_allowance() {
+  set_contact_collision_allowed(false);
+  contact_recovery_required_.store(false);
+}
+
+bool TaskExecutorNode::perform_contact_recovery_retract() {
+  if (!moveit_context_) {
+    RCLCPP_WARN(get_logger(), "Cannot perform contact recovery retract: MoveItContext is null");
+    return false;
+  }
+  RCLCPP_WARN(get_logger(), "Performing contact recovery retract");
+  publish_log("Performing contact recovery retract");
+  if (!set_contact_collision_allowed(true)) {
+    RCLCPP_ERROR(get_logger(), "Failed to enable contact collision allowance before recovery retract");
+    return false;
+  }
+  std::string error_msg;
+  if (!moveit_context_->startMoveTcpRelativeZ("ur_arm",
+    "ur10e_tcp",
+    kContactRecoveryRetractDistanceM,
+    kContactRecoveryVelocityScale,
+    kContactRecoveryAccelerationScale,
+    kContactRecoveryEefStep,
+    kContactRecoveryMinFraction,
+    true,
+    error_msg)) {
+    RCLCPP_ERROR(get_logger(), "Failed to start contact recovery retract: %s", error_msg.c_str());
+    restore_contact_collision_allowance();
+    return false;
+  }
+  while (rclcpp::ok()) {
+    const auto status = moveit_context_->pollMotionResult(error_msg);
+    if (status == MoveItContext::MotionStatus::RUNNING) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      continue;
+    }
+    restore_contact_collision_allowance();
+    if (status == MoveItContext::MotionStatus::SUCCESS) {
+      RCLCPP_INFO(get_logger(), "Contact recovery retract completed successfully");
+      publish_log("Contact recovery retract completed successfully");
+      return true;
+    }
+    RCLCPP_ERROR(get_logger(), "Contact recovery retract failed: %s", error_msg.c_str());
+    publish_log("Contact recovery retract failed");
+    return false;
+  }
+  restore_contact_collision_allowance();
+  return false;
+}
+
 std::string TaskExecutorNode::status_to_string(BT::NodeStatus status) const {
   switch (status) {
     case BT::NodeStatus::IDLE:
@@ -344,60 +483,4 @@ std::string TaskExecutorNode::node_type_to_string(BT::NodeType type) const {
     default:
       return "UNKNOWN";
   }
-}
-
-void TaskExecutorNode::restore_contact_collision_allowance() {
-  if (!moveit_context_) {
-    return;
-  }
-  std::string error_msg;
-  if (!moveit_context_->setAllowedCollision("iccoil", "dummy_head", false, error_msg)) {
-    RCLCPP_WARN(get_logger(), "Failed to restore iccoil/dummy_head collision checking: %s", error_msg.c_str());
-  }
-}
-
-bool TaskExecutorNode::perform_contact_recovery_retract() {
-  if (!moveit_context_) {
-    RCLCPP_WARN(get_logger(), "Cannot perform contact recovery retract: MoveItContext is null");
-    return false;
-  }
-  RCLCPP_WARN(get_logger(), "Performing contact recovery retract after cancel");
-  std::string error_msg;
-  if (!moveit_context_->setAllowedCollision("iccoil", 
-    "dummy_head", 
-    true, 
-    error_msg)) {
-    RCLCPP_ERROR(get_logger(), "Failed to enable contact collision for recovery: %s", error_msg.c_str());
-    return false;
-  }
-  if (!moveit_context_->startMoveTcpRelativeZ("ur_arm",
-    "ur10e_tcp",
-    -0.050,
-    0.01,
-    0.01,
-    0.0001,
-    0.90,
-    true,
-    error_msg)) {
-    RCLCPP_ERROR(get_logger(), "Failed to start contact recovery retract: %s", error_msg.c_str());
-    restore_contact_collision_allowance();
-    return false;
-  }
-  while (rclcpp::ok()) {
-    const auto status = moveit_context_->pollMotionResult(error_msg);
-    if (status == MoveItContext::MotionStatus::RUNNING) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      continue;
-    }
-    restore_contact_collision_allowance();
-    if (status == MoveItContext::MotionStatus::SUCCESS) {
-      RCLCPP_INFO(get_logger(), "Contact recovery retract completed successfully");
-      contact_recovery_required_.store(false);
-      return true;
-    }
-    RCLCPP_ERROR(get_logger(),  "Contact recovery retract failed: %s", error_msg.c_str());
-    return false;
-  }
-  restore_contact_collision_allowance();
-  return false;
 }

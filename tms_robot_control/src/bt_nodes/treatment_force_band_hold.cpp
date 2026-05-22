@@ -276,10 +276,18 @@ BT::NodeStatus TreatmentForceBandHoldNode::onRunning() {
     action = "ADVANCE";
   }
   std::ostringstream ss;
+  ss.setf(std::ios::fixed);
+  ss.precision(1);
   ss << action
-     << " elapsed=" << static_cast<int>(elapsed_sec)
-     << "/" << static_cast<int>(duration_sec_) << "s"
-     << " Fz=" << force_z << "N";
+     << " | " << elapsed_sec << "/" << duration_sec_ << " sec"
+     << " | Fz=" << force_z << " N";
+  if (enable_distance_guard_) {
+    double distance_m = 0.0;
+    rclcpp::Time distance_stamp;
+    if (sensor_context->getLatestDistance(distance_m, distance_stamp)) {
+      ss << " | D=" << distance_m * 1000.0 << " mm";
+    }
+  }
   publishTreatmentStatus(ss.str());
   if (step == 0.0) {
     RCLCPP_INFO_THROTTLE(rclcpp::get_logger("TreatmentForceBandHoldNode"),
@@ -302,8 +310,7 @@ BT::NodeStatus TreatmentForceBandHoldNode::onRunning() {
     min_force_z_,
     max_force_z_,
     step);
-  return startTcpStep(step) 
-    ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE;
+  return startTcpStep(step) ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE;
 }
 
 void TreatmentForceBandHoldNode::onHalted() {
