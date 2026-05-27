@@ -49,7 +49,8 @@ private:
     double tcp_offset_z_m, 
     double treatment_duration_sec, 
     bool enable_distance_guard, 
-    double min_distance_m);
+    double min_distance_m,
+    const std::string & force_mode);
   void publish_tree_status();
   std::string task_xml_path(const std::string & task_name) const;
   std::string lifecycle_state_to_string(TaskLifecycleState state) const;
@@ -62,7 +63,12 @@ private:
     double tcp_offset_z_m,
     double treatment_duration_sec,
     bool enable_distance_guard,
-    double min_distance_m);
+    double min_distance_m,
+    const std::string & force_mode,
+    double min_force_z,
+    double max_force_z,
+    double hard_min_force_z);
+  void force_band_from_mode(const std::string & force_mode, double & min_force_z, double & max_force_z, double & hard_min_force_z);
   bool set_contact_collision_allowed(bool allowed);
   void restore_contact_collision_allowance();
   bool perform_contact_recovery_retract();

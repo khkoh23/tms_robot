@@ -26,6 +26,8 @@ private:
   BT::NodeStatus pollActiveMotion();
   bool checkDistanceGuard(bool & violated);
   void publishTreatmentStatus(const std::string & status);
+  void publishFinalSummary(const std::string & exit_reason);
+  void publishFinalUiStatus(const std::string & exit_reason);
   std::chrono::steady_clock::time_point start_time_;
   InternalState state_{InternalState::MONITORING};
   RetractOutcome retract_outcome_{RetractOutcome::SUCCESS_AFTER_DURATION};

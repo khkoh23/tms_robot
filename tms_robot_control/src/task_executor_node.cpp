@@ -104,11 +104,27 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   double treatment_duration_sec = clamp_double(goal->treatment_duration_sec, kMinTreatmentDurationSec, kMaxTreatmentDurationSec, "treatment_duration_sec");
   double min_distance_m = clamp_double(goal->min_distance_m, kMinDistanceGuardM, kMaxDistanceGuardM, "min_distance_m");
   const bool enable_distance_guard = goal->enable_distance_guard;
+  std::string force_mode = goal->force_mode;
+  if (force_mode.empty()) {
+    force_mode = "LIGHT"; 
+  }
+  double min_force_z = -8.0;
+  double max_force_z = -3.0;
+  double hard_min_force_z = -20.0;
+  force_band_from_mode(force_mode, min_force_z, max_force_z, hard_min_force_z);
   clear_treatment_status();
-  publish_task_parameter_summary(goal->task_name, tcp_offset_z_m, treatment_duration_sec, enable_distance_guard, min_distance_m);
+  publish_task_parameter_summary(goal->task_name, 
+    tcp_offset_z_m, 
+    treatment_duration_sec, 
+    enable_distance_guard, 
+    min_distance_m, 
+    force_mode, 
+    min_force_z, 
+    max_force_z, 
+    hard_min_force_z);
   auto feedback = std::make_shared<ExecuteTask::Feedback>();
   auto result = std::make_shared<ExecuteTask::Result>();
-  if (!load_tree_for_task(goal->task_name, tcp_offset_z_m, treatment_duration_sec, enable_distance_guard, min_distance_m)) {
+  if (!load_tree_for_task(goal->task_name, tcp_offset_z_m, treatment_duration_sec, enable_distance_guard, min_distance_m, force_mode)) {
     restore_contact_collision_allowance();
     set_lifecycle_state(TaskLifecycleState::FAILURE, goal->task_name, "", "Failed to load behavior tree");
     result->success = false;
@@ -185,7 +201,12 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
   double tcp_offset_z_m, 
   double treatment_duration_sec, 
   bool enable_distance_guard,
-  double min_distance_m) {
+  double min_distance_m,
+  const std::string & force_mode) {
+  double min_force_z = -8.0;
+  double max_force_z = -3.0;
+  double hard_min_force_z = -20.0;
+  force_band_from_mode(force_mode, min_force_z, max_force_z, hard_min_force_z);
   const auto xml_path = task_xml_path(task_name);
   if (xml_path.empty()) {
     RCLCPP_ERROR(get_logger(), "Unknown task name: %s", task_name.c_str());
@@ -212,6 +233,10 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
     blackboard->set<bool>("enable_distance_guard", enable_distance_guard);
     blackboard->set<double>("min_distance_m", min_distance_m);
     blackboard->set<std::atomic<bool> *>("contact_recovery_required", &contact_recovery_required_);
+    blackboard->set<std::string>("force_mode", force_mode);
+    blackboard->set<double>("min_force_z", min_force_z);
+    blackboard->set<double>("max_force_z", max_force_z);
+    blackboard->set<double>("hard_min_force_z", hard_min_force_z);
     if (!moveit_context_) {
       moveit_context_ = std::make_shared<MoveItContext>(this->shared_from_this());
     }
@@ -370,7 +395,11 @@ void TaskExecutorNode::publish_task_parameter_summary(const std::string & task_n
   double tcp_offset_z_m,
   double treatment_duration_sec,
   bool enable_distance_guard,
-  double min_distance_m) {
+  double min_distance_m,
+  const std::string & force_mode,
+  double min_force_z,
+  double max_force_z,
+  double hard_min_force_z) {
   std::ostringstream ss;
   ss
     << "Task parameters: "
@@ -378,10 +407,32 @@ void TaskExecutorNode::publish_task_parameter_summary(const std::string & task_n
     << ", tcp_offset_z=" << tcp_offset_z_m * 1000.0 << " mm"
     << ", treatment_duration=" << treatment_duration_sec << " sec"
     << ", distance_guard=" << (enable_distance_guard ? "ON" : "OFF")
-    << ", min_distance=" << min_distance_m * 1000.0 << " mm";
+    << ", min_distance=" << min_distance_m * 1000.0 << " mm"
+    << ", force_mode=" << force_mode
+    << ", force_band=[" << min_force_z << ", " << max_force_z << "] N"
+    << ", hard_min_force_z=" << hard_min_force_z << " N";
   const auto summary = ss.str();
   RCLCPP_INFO(get_logger(), "%s", summary.c_str());
   publish_log(summary);
+}
+
+void TaskExecutorNode::force_band_from_mode(const std::string & force_mode, 
+  double & min_force_z,
+  double & max_force_z,
+  double & hard_min_force_z) {
+  hard_min_force_z = -20.0;
+  if (force_mode == "HEAVY") {
+    min_force_z = -15.0;
+    max_force_z = -8.0;
+    return;
+  }
+  if (force_mode != "LIGHT") {
+    RCLCPP_WARN(get_logger(), 
+      "Unknown force_mode '%s'. Falling back to LIGHT.",
+      force_mode.c_str());
+  }
+  min_force_z = -8.0;
+  max_force_z = -3.0;
 }
 
 bool TaskExecutorNode::set_contact_collision_allowed(bool allowed) {

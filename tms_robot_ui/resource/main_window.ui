@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>1370</width>
-    <height>932</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Robot Console UI</string>
   </property>
@@ -61,7 +53,7 @@
     </item>
     <item>
      <widget class="QWidget" name="bottom_row_widget" native="true">
-      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,2,1">
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,2">
        <item>
         <widget class="QGroupBox" name="tasks_group">
          <property name="title">
@@ -71,13 +63,6 @@
           <item>
            <widget class="QWidget" name="task_controls_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_4">
-             <item>
-              <widget class="QPushButton" name="zero_button">
-               <property name="text">
-                <string>Zero FTS</string>
-               </property>
-              </widget>
-             </item>
              <item>
               <widget class="QComboBox" name="task_selector"/>
              </item>
@@ -178,6 +163,31 @@
               </layout>
              </item>
              <item>
+              <layout class="QHBoxLayout" name="force_mode_layout">
+               <item>
+                <widget class="QLabel" name="force_mode_label">
+                 <property name="text">
+                  <string>Force Mode</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="force_mode_combo">
+                 <item>
+                  <property name="text">
+                   <string>Light Touch</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Heavy Press</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
               <widget class="QPushButton" name="start_button">
                <property name="text">
                 <string>Start Task</string>
@@ -197,6 +207,13 @@
           <item>
            <widget class="QWidget" name="task_status_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
+              <widget class="QPushButton" name="zero_button">
+               <property name="text">
+                <string>Zero FTS</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QLabel" name="force_label">
                <property name="text">

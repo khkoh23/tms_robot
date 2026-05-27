@@ -26,7 +26,8 @@ public:
   void startTask(const QString & task_name, 
     double tcp_offset_z_mm, 
     double treatment_duration_sec,
-    double min_distance_mm);
+    double min_distance_mm,
+    const QString & force_mode);
   void cancelTask();
 signals:
   void taskStateUpdated(const QString & task_name, 

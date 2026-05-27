@@ -79,6 +79,7 @@ private:
   QDoubleSpinBox * tcp_offset_spinbox_;
   QDoubleSpinBox * treatment_duration_spinbox_;
   QDoubleSpinBox * distance_guard_spinbox_;
+  QComboBox * force_mode_combo_;
   QLabel * treatment_status_label_;
   QPushButton * zero_button_;
   QPushButton * start_button_;

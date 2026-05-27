@@ -276,12 +276,26 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
       force_z);
     return BT::NodeStatus::FAILURE;
   }
-  RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"),
-    "Force_z=%.3f N outside band [%.3f, %.3f]. Commanding TCP Z step %.6f m",
+  double current_distance_m = 0.0;
+  rclcpp::Time current_distance_stamp;
+  bool has_distance = sensor_context->getLatestDistance(current_distance_m, current_distance_stamp);
+  if (has_distance) {
+    RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    "Force_z=%.3f N, UC4=%.1f mm outside band [%.3f, %.3f]. Commanding TCP Z step %.6f m",
+    force_z,
+    current_distance_m * 1000.0,
+    min_force_z_,
+    max_force_z_,
+    step); 
+  } 
+  else {
+    RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    "Force_z=%.3f N, UC4=NO_SAMPLE outside band [%.3f, %.3f]. Commanding TCP Z step %.6f m",
     force_z,
     min_force_z_,
     max_force_z_,
-    step);
+    step); 
+  }
   return startTcpStep(step)
     ? BT::NodeStatus::RUNNING
     : BT::NodeStatus::FAILURE;

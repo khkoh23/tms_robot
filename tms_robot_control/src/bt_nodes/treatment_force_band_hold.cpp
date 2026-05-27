@@ -41,6 +41,67 @@ void TreatmentForceBandHoldNode::publishTreatmentStatus(const std::string & stat
   treatment_status_pub_->publish(msg);
 }
 
+void TreatmentForceBandHoldNode::publishFinalSummary(const std::string & exit_reason) {
+  auto sensor_context = get_sensor_context_from_blackboard(config());
+  double force_z = 0.0;
+  double distance_m = 0.0;
+  rclcpp::Time force_stamp;
+  rclcpp::Time distance_stamp;
+  const bool has_force = sensor_context->getLatestForceZ(force_z, force_stamp);
+  const bool has_distance = sensor_context->getLatestDistance(distance_m, distance_stamp);
+  const double elapsed_sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time_).count();
+  std::ostringstream ss;
+  ss.setf(std::ios::fixed);
+  ss.precision(2);
+  ss
+    << "Treatment summary | "
+    << "exit=" << exit_reason
+    << " | mode_band=[" << min_force_z_ << ", " << max_force_z_ << "] N"
+    << " | hard_min=" << hard_min_force_z_ << " N"
+    << " | elapsed=" << elapsed_sec << "/" << duration_sec_ << " sec"
+    << " | steps=" << step_count_
+    << " | total_adjustment=" << total_adjustment_abs_ * 1000.0 << " mm";
+  if (has_force) {
+    ss << " | final_Fz=" << force_z << " N";
+  } 
+  else {
+    ss << " | final_Fz=NO_SAMPLE";
+  }
+  if (has_distance) {
+    ss << " | final_UC4=" << distance_m * 1000.0 << " mm";
+  } 
+  else {
+    ss << " | final_UC4=NO_SAMPLE";
+  }
+  const auto summary = ss.str();
+  RCLCPP_INFO(rclcpp::get_logger("TreatmentForceBandHoldNode"), "%s", summary.c_str());
+  publishFinalUiStatus(exit_reason);
+}
+
+void TreatmentForceBandHoldNode::publishFinalUiStatus(const std::string & exit_reason) {
+  if (exit_reason == "SUCCESS_DURATION_REACHED") {
+    publishTreatmentStatus("DONE");
+    return;
+  }
+  if (exit_reason == "FAILURE_DISTANCE_GUARD") {
+    publishTreatmentStatus("FAILED - Distance guard");
+    return;
+  }
+  if (exit_reason == "FAILURE_HARD_FORCE_LIMIT") {
+    publishTreatmentStatus("FAILED - Hard force");
+    return;
+  }
+  if (exit_reason == "HALTED") {
+    publishTreatmentStatus("HALT");
+    return;
+  }
+  if (exit_reason == "CANCEL") {
+    publishTreatmentStatus("CANCEL");
+    return;
+  }
+  publishTreatmentStatus("FAILED");
+}
+
 BT::NodeStatus TreatmentForceBandHoldNode::onStart() {
   if (is_cancel_requested_from_blackboard(config())) {
     return BT::NodeStatus::FAILURE;
@@ -212,11 +273,22 @@ BT::NodeStatus TreatmentForceBandHoldNode::pollActiveMotion() {
   if (state_ == InternalState::RETRACTING) {
     state_ = InternalState::MONITORING;
     if (retract_outcome_ == RetractOutcome::SUCCESS_AFTER_DURATION) {
-      publishTreatmentStatus("DONE treatment duration reached and retracted");
-      return BT::NodeStatus::SUCCESS;
+      publishFinalSummary("SUCCESS_DURATION_REACHED");
+      return BT::NodeStatus::SUCCESS; 
     }
-    publishTreatmentStatus("FAILED safety recovery retract completed");
-    return BT::NodeStatus::FAILURE;
+    switch (retract_outcome_) {
+      case RetractOutcome::FAILURE_AFTER_HARD_LIMIT:
+        publishFinalSummary("FAILURE_HARD_FORCE_LIMIT");
+        break;
+      case RetractOutcome::FAILURE_AFTER_DISTANCE:
+        publishFinalSummary("FAILURE_DISTANCE_GUARD");
+        break;
+      case RetractOutcome::FAILURE_AFTER_ERROR:
+      default:
+        publishFinalSummary("FAILURE_ERROR");
+        break;
+    }
+    return BT::NodeStatus::FAILURE; 
   }
   state_ = InternalState::MONITORING;
   return BT::NodeStatus::RUNNING;
@@ -279,13 +351,13 @@ BT::NodeStatus TreatmentForceBandHoldNode::onRunning() {
   ss.setf(std::ios::fixed);
   ss.precision(1);
   ss << action
-     << " | " << elapsed_sec << "/" << duration_sec_ << " sec"
-     << " | Fz=" << force_z << " N";
+     << " " << elapsed_sec << "/" << duration_sec_ << " sec"
+     << " Fz=" << force_z << " N";
   if (enable_distance_guard_) {
     double distance_m = 0.0;
     rclcpp::Time distance_stamp;
     if (sensor_context->getLatestDistance(distance_m, distance_stamp)) {
-      ss << " | D=" << distance_m * 1000.0 << " mm";
+      ss << " D=" << distance_m * 1000.0 << " mm";
     }
   }
   publishTreatmentStatus(ss.str());
@@ -316,6 +388,11 @@ BT::NodeStatus TreatmentForceBandHoldNode::onRunning() {
 void TreatmentForceBandHoldNode::onHalted() {
   auto moveit_context = get_moveit_context_from_blackboard(config());
   moveit_context->stopMotion();
-  publishTreatmentStatus("HALTED");
+  if (is_cancel_requested_from_blackboard(config())) {
+    publishFinalSummary("CANCEL");
+    RCLCPP_WARN(rclcpp::get_logger("TreatmentForceBandHoldNode"), "Treatment force hold canceled");
+    return;
+  }
+  publishFinalSummary("HALTED");
   RCLCPP_WARN(rclcpp::get_logger("TreatmentForceBandHoldNode"), "Treatment force hold halted");
 }

@@ -36,6 +36,7 @@ void MainWindow::buildUi() {
   distance_guard_spinbox_ = ui_->distance_guard_spinbox;
   treatment_status_label_ = ui_->treatment_status_label;
   zero_button_ = ui_->zero_button;
+  force_mode_combo_ = ui_->force_mode_combo;
   start_button_ = ui_->start_button;
   cancel_button_ = ui_->cancel_button;
   force_label_ = ui_->force_label;
@@ -157,10 +158,15 @@ void MainWindow::onStartClicked() {
   const double tcp_offset_z_mm = tcp_offset_spinbox_->value();
   const double treatment_duration_sec = treatment_duration_spinbox_->value();
   const double min_distance_mm = distance_guard_spinbox_->value();
+  QString force_mode = "LIGHT";
+  if (force_mode_combo_->currentText() == "Heavy Press") {
+    force_mode = "HEAVY";
+  }
   ros_bridge_->startTask(selectedTaskName(),
     tcp_offset_z_mm,
     treatment_duration_sec,
-    min_distance_mm);
+    min_distance_mm,
+    force_mode);
 }
 
 void MainWindow::onCancelClicked() {
