@@ -49,7 +49,14 @@ void TreatmentForceBandHoldNode::publishFinalSummary(const std::string & exit_re
   rclcpp::Time distance_stamp;
   const bool has_force = sensor_context->getLatestForceZ(force_z, force_stamp);
   const bool has_distance = sensor_context->getLatestDistance(distance_m, distance_stamp);
-  const double elapsed_sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time_).count();
+  const auto now = std::chrono::steady_clock::now();
+  const double total_elapsed_sec = std::chrono::duration<double>(now - start_time_).count();
+  double hold_elapsed_sec = total_elapsed_sec;
+  double recovery_elapsed_sec = 0.0;
+  if (recovery_started_) {
+    hold_elapsed_sec = std::chrono::duration<double>(recovery_start_time_ - start_time_).count();
+    recovery_elapsed_sec = std::chrono::duration<double>(now - recovery_start_time_).count(); 
+  }
   std::ostringstream ss;
   ss.setf(std::ios::fixed);
   ss.precision(2);
@@ -58,7 +65,9 @@ void TreatmentForceBandHoldNode::publishFinalSummary(const std::string & exit_re
     << "exit=" << exit_reason
     << " | mode_band=[" << min_force_z_ << ", " << max_force_z_ << "] N"
     << " | hard_min=" << hard_min_force_z_ << " N"
-    << " | elapsed=" << elapsed_sec << "/" << duration_sec_ << " sec"
+    << " | hold_elapsed=" << hold_elapsed_sec << "/" << duration_sec_ << " sec"
+    << " | total_elapsed=" << total_elapsed_sec << " sec"
+    << " | recovery_elapsed=" << recovery_elapsed_sec << " sec"
     << " | steps=" << step_count_
     << " | total_adjustment=" << total_adjustment_abs_ * 1000.0 << " mm";
   if (has_force) {
@@ -160,6 +169,7 @@ BT::NodeStatus TreatmentForceBandHoldNode::onStart() {
   duration_sec_ = std::clamp(duration_sec_, 10.0, 300.0);
   min_distance_m_ = std::clamp(min_distance_m_, 0.025, 0.150);
   state_ = InternalState::MONITORING;
+  recovery_started_ = false;
   retract_outcome_ = RetractOutcome::SUCCESS_AFTER_DURATION;
   total_adjustment_abs_ = 0.0;
   step_count_ = 0;
@@ -234,6 +244,8 @@ bool TreatmentForceBandHoldNode::startRecoveryRetract(RetractOutcome outcome) {
   std::string error_msg;
   auto moveit_context = get_moveit_context_from_blackboard(config());
   retract_outcome_ = outcome;
+  recovery_started_ = true;
+  recovery_start_time_ = std::chrono::steady_clock::now();
   publishTreatmentStatus("RECOVERY retracting from contact");
   RCLCPP_WARN(rclcpp::get_logger("TreatmentForceBandHoldNode"),
     "Starting contact recovery retract: distance=%.6f m",

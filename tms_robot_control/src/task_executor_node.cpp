@@ -289,11 +289,8 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   if (task_name == "move_to_tcp_target_offset") {
     return share_dir + "/tree/move_to_tcp_target_offset.xml";
   }
-  if (task_name == "move_tcp_relative_z_test") {
+  if (task_name == "move_tcp_relative") {
     return share_dir + "/tree/move_tcp_relative_z_test.xml";
-  }
-  if (task_name == "approach_tcp_z_force_band_test") {
-    return share_dir + "/tree/approach_tcp_z_force_band_test.xml";
   }
   if (task_name == "retract_from_contact") {
     return share_dir + "/tree/retract_from_contact.xml";
@@ -309,12 +306,6 @@ std::string TaskExecutorNode::task_xml_path(const std::string & task_name) const
   }
   if (task_name == "sensor_watch_test") {
     return share_dir + "/tree/sensor_watch_test.xml"; 
-  }
-  if (task_name == "inspect") {
-    return share_dir + "/tree/inspect_tree.xml";
-  }
-  if (task_name == "patrol") {
-    return share_dir + "/tree/patrol_tree.xml";
   }
   return "";
 }

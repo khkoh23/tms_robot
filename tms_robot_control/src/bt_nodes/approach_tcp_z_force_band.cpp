@@ -1,6 +1,7 @@
 #include "tms_robot_control/bt_nodes/approach_tcp_z_force_band.hpp"
 
 #include <cmath>
+#include <sstream>
 #include <rclcpp/rclcpp.hpp>
 #include "tms_robot_control/bt_nodes/bt_utils.hpp"
 
@@ -14,7 +15,7 @@ BT::PortsList ApproachTcpZForceBandNode::providedPorts() {
     BT::InputPort<std::string>("tcp_link", std::string("ur10e_tcp"), "TCP/end-effector link to move"),
     BT::InputPort<double>("min_force_z", -8.0, "Lower force band bound in N"), 
     BT::InputPort<double>("max_force_z", -3.0, "Upper force band bound in N"), 
-    BT::InputPort<double>("hard_min_force_z", -10.0, "Hard minimum force safety limit in N"),
+    BT::InputPort<double>("hard_min_force_z", -20.0, "Hard minimum force safety limit in N"),
     BT::InputPort<double>("step_distance", 0.0005, "TCP Z step distance in meters"), 
     BT::InputPort<double>("max_total_advance", 0.050, "Maximum accumulated absolute TCP Z travel in meters"),
     BT::InputPort<double>("force_freshness_sec", 0.20, "Maximum allowed age of force sample in seconds"),
@@ -96,7 +97,9 @@ BT::NodeStatus ApproachTcpZForceBandNode::onStart() {
   step_count_ = 0;
   step_state_ = StepState::IDLE;
   start_time_ = std::chrono::steady_clock::now();
-  RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"),
+  RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    *get_ros_node_from_blackboard(config())->get_clock(),
+    1000,
     "Starting force-band TCP Z approach. Band=[%.2f, %.2f] N, hard_min=%.2f N, step=%.6f m, max_total=%.3f m, avoid_collisions=%s, distance_guard=%s, min_distance=%.1f mm",
     min_force_z_,
     max_force_z_,
@@ -173,11 +176,50 @@ BT::NodeStatus ApproachTcpZForceBandNode::pollActiveMotion() {
   if (step_state_ == StepState::RECOVERY_RETRACTING) {
     RCLCPP_ERROR(rclcpp::get_logger("ApproachTcpZForceBandNode"),
       "Approach recovery retract completed. Returning FAILURE.");
+    publishApproachSummary("RECOVERY_RETRACT_DONE");
     step_state_ = StepState::IDLE;
     return BT::NodeStatus::FAILURE;
   }
   step_state_ = StepState::IDLE;
   return BT::NodeStatus::RUNNING;
+}
+
+void ApproachTcpZForceBandNode::publishApproachSummary(const std::string & exit_reason) {
+  auto sensor_context = get_sensor_context_from_blackboard(config());
+  double force_z = 0.0;
+  double distance_m = 0.0;
+  rclcpp::Time force_stamp;
+  rclcpp::Time distance_stamp;
+  const bool has_force = sensor_context->getLatestForceZ(force_z, force_stamp);
+  const bool has_distance = sensor_context->getLatestDistance(distance_m, distance_stamp);
+  const double elapsed_sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time_).count();
+  std::ostringstream ss;
+  ss.setf(std::ios::fixed);
+  ss.precision(2);
+  ss
+    << "Approach summary | "
+    << "exit=" << exit_reason
+    << " | band=[" << min_force_z_ << ", " << max_force_z_ << "] N"
+    << " | hard_min=" << hard_min_force_z_ << " N"
+    << " | elapsed=" << elapsed_sec << " sec"
+    << " | steps=" << step_count_
+    << " | total_advance_mm=" << total_motion_abs_ * 1000.0 << " mm";
+  if (has_force) {
+    ss << " | final_Fz=" << force_z << " N";
+  } 
+  else {
+    ss << " | final_Fz=NO_SAMPLE";
+  }
+  if (has_distance) {
+    ss << " | final_UC4=" << distance_m * 1000.0 << " mm";
+  } 
+  else {
+    ss << " | final_UC4=NO_SAMPLE";
+  }
+  RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    *get_ros_node_from_blackboard(config())->get_clock(),
+    1000,
+    "%s", ss.str().c_str());
 }
 
 BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
@@ -186,6 +228,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
       "Cancel requested. Stopping force-band approach.");
     auto moveit_context = get_moveit_context_from_blackboard(config());
     moveit_context->stopMotion();
+    publishApproachSummary("CANCEL");
     return BT::NodeStatus::FAILURE;
   }
   if (step_state_ == StepState::MOVING ||
@@ -195,6 +238,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
   auto sensor_context = get_sensor_context_from_blackboard(config());
   if (enable_distance_guard_) {
     if (!sensor_context->isDistanceFresh(distance_freshness_sec_)) {
+      publishApproachSummary("DISTANCE_GUARD");
       return startRecoveryRetract("UC4 distance data stale")
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
@@ -202,6 +246,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
     double distance_m = 0.0;
     rclcpp::Time distance_stamp;
     if (!sensor_context->getLatestDistance(distance_m, distance_stamp)) {
+      publishApproachSummary("DISTANCE_GUARD");
       return startRecoveryRetract("No UC4 distance sample")
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
@@ -211,6 +256,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
         "UC4 distance guard triggered during approach: distance=%.1f mm < threshold=%.1f mm",
         distance_m * 1000.0,
         min_distance_m_ * 1000.0);
+      publishApproachSummary("DISTANCE_GUARD");
       return startRecoveryRetract("UC4 distance below threshold")
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
@@ -244,19 +290,23 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
       "Hard force limit exceeded during approach: force_z=%.3f N < %.3f N",
       force_z,
       hard_min_force_z_);
+    publishApproachSummary("HARD_FORCE_LIMIT");
     return startRecoveryRetract("Hard force limit exceeded during approach")
       ? BT::NodeStatus::RUNNING
       : BT::NodeStatus::FAILURE;
   }
   if (force_z >= min_force_z_ && force_z <= max_force_z_) {
-    RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"),
-      "Force band reached: force_z=%.3f N within [%.3f, %.3f] N after %d steps, total_abs_motion=%.6f m",
-      force_z,
-      min_force_z_,
-      max_force_z_,
-      step_count_,
-      total_motion_abs_);
-    return BT::NodeStatus::SUCCESS;
+    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    *get_ros_node_from_blackboard(config())->get_clock(),
+    1000,
+    "Force band reached: force_z=%.3f N within [%.3f, %.3f] N after %d steps, total_abs_motion=%.6f m",
+    force_z,
+    min_force_z_,
+    max_force_z_,
+    step_count_,
+    total_motion_abs_);
+    publishApproachSummary("FORCE_BAND_REACHED");
+    return BT::NodeStatus::SUCCESS; 
   }
   double step = 0.0;
   if (force_z > max_force_z_) {
@@ -274,13 +324,16 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
       std::abs(step),
       max_total_advance_,
       force_z);
+    publishApproachSummary("MAX_TOTAL_ADVANCE");
     return BT::NodeStatus::FAILURE;
   }
   double current_distance_m = 0.0;
   rclcpp::Time current_distance_stamp;
   bool has_distance = sensor_context->getLatestDistance(current_distance_m, current_distance_stamp);
   if (has_distance) {
-    RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    *get_ros_node_from_blackboard(config())->get_clock(),
+    1000,
     "Force_z=%.3f N, UC4=%.1f mm outside band [%.3f, %.3f]. Commanding TCP Z step %.6f m",
     force_z,
     current_distance_m * 1000.0,
@@ -289,7 +342,9 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
     step); 
   } 
   else {
-    RCLCPP_INFO(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
+    *get_ros_node_from_blackboard(config())->get_clock(),
+    1000,
     "Force_z=%.3f N, UC4=NO_SAMPLE outside band [%.3f, %.3f]. Commanding TCP Z step %.6f m",
     force_z,
     min_force_z_,

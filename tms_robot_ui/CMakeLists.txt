@@ -39,6 +39,7 @@ add_executable(tms_robot_ui
   src/ros_bridge.cpp
   src/rviz_widget.cpp
   src/camera_view_widget.cpp 
+  src/rolling_plot_widget.cpp
   resource/main_window.ui
   include/tms_robot_ui/main_window.hpp
   include/tms_robot_ui/ros_bridge.hpp

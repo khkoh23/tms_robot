@@ -53,16 +53,26 @@
     </item>
     <item>
      <widget class="QWidget" name="bottom_row_widget" native="true">
-      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="3,1,2">
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,2">
        <item>
         <widget class="QGroupBox" name="tasks_group">
          <property name="title">
           <string>Tasks</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,2">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,1,7">
           <item>
            <widget class="QWidget" name="task_controls_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QCheckBox" name="show_developer_tasks_checkbox">
+               <property name="text">
+                <string>Show developer tasks</string>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QComboBox" name="task_selector"/>
              </item>
@@ -94,36 +104,6 @@
                  </property>
                  <property name="value">
                   <double>100.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="treatment_duration_layout">
-               <item>
-                <widget class="QLabel" name="treatment_duration_label">
-                 <property name="text">
-                  <string>Treatment Time</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="treatment_duration_spinbox">
-                 <property name="suffix">
-                  <string> sec</string>
-                 </property>
-                 <property name="decimals">
-                  <number>0</number>
-                 </property>
-                 <property name="minimum">
-                  <double>10.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>300.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>10.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -188,59 +168,116 @@
               </layout>
              </item>
              <item>
-              <widget class="QPushButton" name="start_button">
-               <property name="text">
-                <string>Start Task</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="cancel_button">
-               <property name="text">
-                <string>Cancel Task</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="treatment_duration_layout">
+               <item>
+                <widget class="QLabel" name="treatment_duration_label">
+                 <property name="text">
+                  <string>Treatment Time</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="treatment_duration_spinbox">
+                 <property name="suffix">
+                  <string> sec</string>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="minimum">
+                  <double>10.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>300.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>10.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>
           </item>
           <item>
+           <layout class="QVBoxLayout" name="action_layout">
+            <item>
+             <widget class="QPushButton" name="zero_button">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(255, 190, 111);</string>
+              </property>
+              <property name="text">
+               <string>Zero
+FTS</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="start_button">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(143, 240, 164);</string>
+              </property>
+              <property name="text">
+               <string>Start
+Task</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="cancel_button">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(246, 97, 81);</string>
+              </property>
+              <property name="text">
+               <string>Cancel
+Task</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <widget class="QWidget" name="task_status_widget" native="true">
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <item>
-              <widget class="QPushButton" name="zero_button">
-               <property name="text">
-                <string>Zero FTS</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="sensor_value_layout">
+               <item>
+                <widget class="QLabel" name="force_label">
+                 <property name="text">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Force sensor Z: -&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="distance_label">
+                 <property name="text">
+                  <string>Distance sensor: -</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
-              <widget class="QLabel" name="force_label">
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Force sensor Z: -&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="sensor_plot_layout"/>
              </item>
              <item>
-              <widget class="QLabel" name="distance_label">
-               <property name="text">
-                <string>Distance sensor: -</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="state_label">
-               <property name="text">
-                <string>State: IDLE</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="active_node_label">
-               <property name="text">
-                <string>Active Node: -</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="node_state_layout">
+               <item>
+                <widget class="QLabel" name="active_node_label">
+                 <property name="text">
+                  <string>Active Node: -</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="state_label">
+                 <property name="text">
+                  <string>State: IDLE</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <widget class="QLabel" name="treatment_status_label">
@@ -256,34 +293,38 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="behavior_tree_group">
-         <property name="title">
-          <string>Behavior Tree</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
-          <item>
-           <widget class="QTreeWidget" name="bt_tree_widget">
-            <column>
-             <property name="text">
-              <string notr="true">1</string>
-             </property>
-            </column>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="log_group">
-         <property name="title">
-          <string>Log</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item>
-           <widget class="QTextEdit" name="log_text"/>
-          </item>
-         </layout>
-        </widget>
+        <layout class="QVBoxLayout" name="bt_log_layout">
+         <item>
+          <widget class="QGroupBox" name="behavior_tree_group">
+           <property name="title">
+            <string>Behavior Tree</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QTreeWidget" name="bt_tree_widget">
+              <column>
+               <property name="text">
+                <string notr="true">1</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="log_group">
+           <property name="title">
+            <string>Log</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QTextEdit" name="log_text"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>

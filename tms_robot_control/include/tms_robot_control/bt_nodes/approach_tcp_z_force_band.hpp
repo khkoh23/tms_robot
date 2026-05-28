@@ -40,4 +40,5 @@ private:
   int step_count_{0};
   StepState step_state_{StepState::IDLE};
   std::chrono::steady_clock::time_point start_time_;
+  void publishApproachSummary(const std::string & exit_reason);
 };

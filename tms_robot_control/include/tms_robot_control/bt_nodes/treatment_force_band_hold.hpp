@@ -53,4 +53,6 @@ private:
   double min_fraction_{0.90};
   double total_adjustment_abs_{0.0};
   int step_count_{0};
+  bool recovery_started_{false};
+  std::chrono::steady_clock::time_point recovery_start_time_;
 };

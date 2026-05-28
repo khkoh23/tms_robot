@@ -20,9 +20,11 @@
 #include "tms_robot_ui/ros_bridge.hpp"
 #include "tms_robot_ui/rviz_widget.hpp"
 #include "tms_robot_ui/camera_view_widget.hpp"
+#include "tms_robot_ui/rolling_plot_widget.hpp"
 
 class QLabel;
 class QPushButton;
+class QCheckBox;
 class QComboBox;
 class QTextEdit;
 class QTreeWidget;
@@ -87,6 +89,10 @@ private:
   QTextEdit * log_text_;
   QTreeWidget * bt_tree_widget_;
   QMap<QString, QTreeWidgetItem *> node_items_;
+  QCheckBox * show_developer_tasks_checkbox_{nullptr};
+  void populateTaskSelector(bool show_developer_tasks);
+  RollingPlotWidget * force_plot_{nullptr};
+  RollingPlotWidget * distance_plot_{nullptr};
 };
 
 #endif // TMS_ROBOT_UI_MAIN_WINDOW_HPP
