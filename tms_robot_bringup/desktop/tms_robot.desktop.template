@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TMS Robot Bringup
+Comment=Launches ROS 2 TMS Robot
+Exec=gnome-terminal -- bash -c "$HOME/tms_ws/install/tms_robot_bringup/share/tms_robot_bringup/desktop/run_all_launch.sh; echo ''; echo 'Script ended. Press Enter to close...'; read"
+Icon=PLACEHOLDER_PATH/share/tms_robot_bringup/desktop/robotic_tms_group.jpg
+Terminal=false
+Categories=Development;
