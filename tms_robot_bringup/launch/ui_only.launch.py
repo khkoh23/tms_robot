@@ -6,7 +6,6 @@ def generate_launch_description():
         Node(
             package='tms_robot_ui',
             executable='tms_robot_ui',
-            name='tms_robot_ui',
             output='screen'
         )
     ])

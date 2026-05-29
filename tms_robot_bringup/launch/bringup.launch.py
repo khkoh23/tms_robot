@@ -31,7 +31,6 @@ def generate_launch_description():
         Node(
             package='tms_robot_control',
             executable='robot_task_executor',
-            name='robot_task_executor',
             output='screen',
             parameters=[
                 moveit_config.robot_description,
@@ -44,7 +43,6 @@ def generate_launch_description():
         Node(
             package='tms_robot_ui',
             executable='tms_robot_ui',
-            name='tms_robot_ui',
             output='screen',
             parameters=[
                 moveit_config.robot_description,

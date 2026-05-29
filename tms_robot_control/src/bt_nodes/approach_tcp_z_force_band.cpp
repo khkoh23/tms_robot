@@ -97,6 +97,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onStart() {
   step_count_ = 0;
   step_state_ = StepState::IDLE;
   start_time_ = std::chrono::steady_clock::now();
+  recovery_exit_reason_ = "RECOVERY_RETRACT";
   RCLCPP_INFO_THROTTLE(rclcpp::get_logger("ApproachTcpZForceBandNode"), 
     *get_ros_node_from_blackboard(config())->get_clock(),
     1000,
@@ -170,13 +171,19 @@ BT::NodeStatus ApproachTcpZForceBandNode::pollActiveMotion() {
     RCLCPP_ERROR(rclcpp::get_logger("ApproachTcpZForceBandNode"),
       "TCP Z approach motion failed: %s",
       error_msg.c_str());
+    if (step_state_ == StepState::RECOVERY_RETRACTING) {
+      publishApproachSummary(recovery_exit_reason_ + "_RECOVERY_FAILED");
+    } 
+    else {
+      publishApproachSummary("MOTION_FAILED");
+    }
     step_state_ = StepState::IDLE;
     return BT::NodeStatus::FAILURE;
   }
   if (step_state_ == StepState::RECOVERY_RETRACTING) {
     RCLCPP_ERROR(rclcpp::get_logger("ApproachTcpZForceBandNode"),
       "Approach recovery retract completed. Returning FAILURE.");
-    publishApproachSummary("RECOVERY_RETRACT_DONE");
+    publishApproachSummary(recovery_exit_reason_ + "_RECOVERY_DONE");
     step_state_ = StepState::IDLE;
     return BT::NodeStatus::FAILURE;
   }
@@ -203,7 +210,7 @@ void ApproachTcpZForceBandNode::publishApproachSummary(const std::string & exit_
     << " | hard_min=" << hard_min_force_z_ << " N"
     << " | elapsed=" << elapsed_sec << " sec"
     << " | steps=" << step_count_
-    << " | total_advance_mm=" << total_motion_abs_ * 1000.0 << " mm";
+    << " | total_abs_motion_mm=" << total_motion_abs_ * 1000.0 << " mm";
   if (has_force) {
     ss << " | final_Fz=" << force_z << " N";
   } 
@@ -224,12 +231,11 @@ void ApproachTcpZForceBandNode::publishApproachSummary(const std::string & exit_
 
 BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
   if (is_cancel_requested_from_blackboard(config())) {
-    RCLCPP_WARN(rclcpp::get_logger("ApproachTcpZForceBandNode"),
-      "Cancel requested. Stopping force-band approach.");
-    auto moveit_context = get_moveit_context_from_blackboard(config());
-    moveit_context->stopMotion();
-    publishApproachSummary("CANCEL");
-    return BT::NodeStatus::FAILURE;
+    RCLCPP_WARN(rclcpp::get_logger("ApproachTcpZForceBandNode"), "Cancel requested. Stopping force-band approach."); 
+    auto moveit_context = get_moveit_context_from_blackboard(config()); 
+    moveit_context->stopMotion(); 
+    publishApproachSummary("CANCEL"); 
+    return BT::NodeStatus::FAILURE; 
   }
   if (step_state_ == StepState::MOVING ||
       step_state_ == StepState::RECOVERY_RETRACTING) {
@@ -238,15 +244,15 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
   auto sensor_context = get_sensor_context_from_blackboard(config());
   if (enable_distance_guard_) {
     if (!sensor_context->isDistanceFresh(distance_freshness_sec_)) {
-      publishApproachSummary("DISTANCE_GUARD");
-      return startRecoveryRetract("UC4 distance data stale")
+      recovery_exit_reason_ = "DISTANCE_STALE";
+      return startRecoveryRetract("UC4 distance data stale") 
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
     }
     double distance_m = 0.0;
     rclcpp::Time distance_stamp;
     if (!sensor_context->getLatestDistance(distance_m, distance_stamp)) {
-      publishApproachSummary("DISTANCE_GUARD");
+      recovery_exit_reason_ = "DISTANCE_NO_SAMPLE";
       return startRecoveryRetract("No UC4 distance sample")
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
@@ -256,7 +262,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
         "UC4 distance guard triggered during approach: distance=%.1f mm < threshold=%.1f mm",
         distance_m * 1000.0,
         min_distance_m_ * 1000.0);
-      publishApproachSummary("DISTANCE_GUARD");
+      recovery_exit_reason_ = "DISTANCE_GUARD";
       return startRecoveryRetract("UC4 distance below threshold")
         ? BT::NodeStatus::RUNNING
         : BT::NodeStatus::FAILURE;
@@ -290,7 +296,7 @@ BT::NodeStatus ApproachTcpZForceBandNode::onRunning() {
       "Hard force limit exceeded during approach: force_z=%.3f N < %.3f N",
       force_z,
       hard_min_force_z_);
-    publishApproachSummary("HARD_FORCE_LIMIT");
+    recovery_exit_reason_ = "HARD_FORCE_LIMIT";
     return startRecoveryRetract("Hard force limit exceeded during approach")
       ? BT::NodeStatus::RUNNING
       : BT::NodeStatus::FAILURE;

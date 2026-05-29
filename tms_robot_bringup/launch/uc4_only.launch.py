@@ -6,7 +6,6 @@ def generate_launch_description():
         Node(
             package='uc4_adc_driver',
             executable='uc4_adc_driver',
-            name='uc4_adc_driver',
             parameters=[{
                 'port': '/dev/uc4',
                 'baudrate': 460800,

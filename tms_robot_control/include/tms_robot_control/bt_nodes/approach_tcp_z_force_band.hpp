@@ -41,4 +41,5 @@ private:
   StepState step_state_{StepState::IDLE};
   std::chrono::steady_clock::time_point start_time_;
   void publishApproachSummary(const std::string & exit_reason);
+  std::string recovery_exit_reason_{"RECOVERY_RETRACT"};
 };
