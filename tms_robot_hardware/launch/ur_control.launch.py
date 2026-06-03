@@ -18,7 +18,6 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 
-
 def launch_setup(context):
     # Initialize Arguments
     ur_type = LaunchConfiguration("ur_type")
@@ -27,6 +26,8 @@ def launch_setup(context):
     controllers_file = LaunchConfiguration("controllers_file")
     description_launchfile = LaunchConfiguration("description_launchfile")
     use_mock_hardware = LaunchConfiguration("use_mock_hardware")
+    mock_sensor_commands = LaunchConfiguration("mock_sensor_commands")
+    kinematics_parameters_file = LaunchConfiguration("kinematics_parameters_file")
     controller_spawner_timeout = LaunchConfiguration("controller_spawner_timeout")
     initial_joint_controller = LaunchConfiguration("initial_joint_controller")
     activate_joint_controller = LaunchConfiguration("activate_joint_controller")
@@ -37,7 +38,6 @@ def launch_setup(context):
     use_tool_communication = LaunchConfiguration("use_tool_communication")
     tool_device_name = LaunchConfiguration("tool_device_name")
     tool_tcp_port = LaunchConfiguration("tool_tcp_port")
-
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -49,7 +49,6 @@ def launch_setup(context):
         ],
         output="screen",
     )
-
     dashboard_client_node = Node(
         package="ur_robot_driver",
         condition=IfCondition(
@@ -61,7 +60,6 @@ def launch_setup(context):
         emulate_tty=True,
         parameters=[{"robot_ip": robot_ip}],
     )
-
     robot_state_helper_node = Node(
         package="ur_robot_driver",
         executable="robot_state_helper",
@@ -73,7 +71,6 @@ def launch_setup(context):
             {"robot_ip": robot_ip},
         ],
     )
-
     tool_communication_node = Node(
         package="ur_robot_driver",
         condition=IfCondition(use_tool_communication),
@@ -88,7 +85,6 @@ def launch_setup(context):
             }
         ],
     )
-
     urscript_interface = Node(
         package="ur_robot_driver",
         executable="urscript_interface",
@@ -96,7 +92,6 @@ def launch_setup(context):
         output="screen",
         condition=UnlessCondition(use_mock_hardware),
     )
-
     controller_stopper_node = Node(
         package="ur_robot_driver",
         executable="controller_stopper_node",
@@ -119,7 +114,6 @@ def launch_setup(context):
             },
         ],
     )
-
     rviz_node = Node(
         package="rviz2",
         condition=IfCondition(launch_rviz),
@@ -128,7 +122,6 @@ def launch_setup(context):
         output="log",
         arguments=["-d", rviz_config_file],
     )
-
     trajectory_until_node = Node(
         package="tms_robot_hardware",
         executable="trajectory_until_node",
@@ -140,7 +133,6 @@ def launch_setup(context):
             },
         ],
     )
-
     # Spawn controllers
     def controller_spawner(controllers, active=True):
         inactive_flags = ["--inactive"] if not active else []
@@ -156,7 +148,6 @@ def launch_setup(context):
             + inactive_flags
             + controllers,
         )
-
     controllers_active = [
         "joint_state_broadcaster",
         "io_and_status_controller",
@@ -179,23 +170,23 @@ def launch_setup(context):
     if activate_joint_controller.perform(context) == "true":
         controllers_active.append(initial_joint_controller.perform(context))
         controllers_inactive.remove(initial_joint_controller.perform(context))
-
     if use_mock_hardware.perform(context) == "true":
         controllers_active.remove("tcp_pose_broadcaster")
-
     controller_spawners = [
         controller_spawner(controllers_active),
         controller_spawner(controllers_inactive, active=False),
     ]
-
     rsp = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(description_launchfile),
         launch_arguments={
             "robot_ip": robot_ip,
             "ur_type": ur_type,
+            "use_mock_hardware": use_mock_hardware,
+            "mock_sensor_commands": mock_sensor_commands,
+            "headless_mode": headless_mode,
+            "kinematics_parameters_file": kinematics_parameters_file,
         }.items(),
     )
-
     nodes_to_start = [
         control_node,
         dashboard_client_node,
@@ -207,9 +198,7 @@ def launch_setup(context):
         rviz_node,
         trajectory_until_node,
     ] + controller_spawners
-
     return nodes_to_start
-
 
 def generate_launch_description():
     declared_arguments = []
@@ -219,22 +208,7 @@ def generate_launch_description():
             "ur_type",
             default_value="ur10e",
             description="Type/series of used UR robot.",
-            choices=[
-                "ur3",
-                "ur5",
-                "ur10",
-                "ur3e",
-                "ur5e",
-                "ur7e",
-                "ur10e",
-                "ur12e",
-                "ur16e",
-                "ur8long",
-                "ur15",
-                "ur18",
-                "ur20",
-                "ur30",
-            ],
+            choices=["ur3", "ur5", "ur10", "ur3e", "ur5e", "ur7e", "ur10e", "ur12e", "ur16e", "ur8long", "ur15", "ur18", "ur20", "ur30", ],
         )
     )
     declared_arguments.append(
@@ -489,11 +463,15 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            name="kinematics_params_file",
+            name="kinematics_parameters_file",
             default_value=PathJoinSubstitution(
-                [FindPackageShare("tms_robot_hardware"), "config", "default_ur10e_calibration.yaml"]
-                # [FindPackageShare("tms_robot_hardware"), "config", "sim_robot_calibration.yaml"]
+                [
+                    FindPackageShare("tms_robot_hardware"),
+                    "config",
+                    "default_ur10e_calibration.yaml", 
+                ]
             ),
+            description="UR calibration YAML passed to the robot description xacro.",
         )
     )
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
