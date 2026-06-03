@@ -24,6 +24,13 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument("use_mock_hardware", default_value="true")
     )
+    declared_arguments.append(DeclareLaunchArgument("kinematics_parameters_file", default_value=PathJoinSubstitution(
+        [
+            FindPackageShare("tms_robot_hardware"),
+            "config",
+            "default_ur10e_calibration.yaml",
+        ]
+    )))
     return LaunchDescription(
         declared_arguments
         + [

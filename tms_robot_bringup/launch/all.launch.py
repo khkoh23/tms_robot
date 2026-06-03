@@ -1,8 +1,9 @@
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 import os
@@ -11,15 +12,30 @@ def generate_launch_description():
     bringup_share = get_package_share_directory('tms_robot_bringup')
     moveit_config = (MoveItConfigsBuilder("tms_robot_cell", package_name="tms_robot_moveit_config").to_moveit_configs())
     use_mock_hardware = LaunchConfiguration("use_mock_hardware")
+    kinematics_parameters_file = LaunchConfiguration("kinematics_parameters_file")
     declared_arguments = []
     declared_arguments.append(DeclareLaunchArgument("use_mock_hardware", default_value="false"))
-
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "kinematics_parameters_file", 
+            default_value=PathJoinSubstitution(
+                [
+                    FindPackageShare("tms_robot_hardware"),
+                    "config",
+                    "real_robot_calibration.yaml",
+                ]
+            )
+        )
+    )
     return LaunchDescription(declared_arguments + [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(bringup_share, 'launch', 'robot_runtime.launch.py')
             ),
-            launch_arguments={"use_mock_hardware": use_mock_hardware}.items(),
+            launch_arguments={
+                "use_mock_hardware": use_mock_hardware,
+                "kinematics_parameters_file": kinematics_parameters_file,
+            }.items(),
         ),
 
         IncludeLaunchDescription(
