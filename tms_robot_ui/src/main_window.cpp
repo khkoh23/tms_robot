@@ -79,9 +79,9 @@ void MainWindow::buildUi() {
   force_plot_ = new RollingPlotWidget(this);
   force_plot_->setTitle("Force Z");
   force_plot_->setYAxisLabel("N");
-  force_plot_->setYRange(-25.0, 5.0);
+  force_plot_->setYRange(-30.0, 5.0);
   force_plot_->setWindowSec(10.0);
-  force_plot_->setReferenceLines({-3.0, -8.0, -15.0, -20.0});
+  force_plot_->setReferenceLines({-3.0, -8.0, -13.0, -25.0});
   distance_plot_ = new RollingPlotWidget(this);
   distance_plot_->setTitle("UC4 Distance");
   distance_plot_->setYAxisLabel("mm");

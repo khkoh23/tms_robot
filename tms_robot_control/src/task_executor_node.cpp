@@ -110,7 +110,7 @@ void TaskExecutorNode::execute_goal(const std::shared_ptr<GoalHandleExecuteTask>
   }
   double min_force_z = -8.0;
   double max_force_z = -3.0;
-  double hard_min_force_z = -20.0;
+  double hard_min_force_z = -25.0;
   force_band_from_mode(force_mode, min_force_z, max_force_z, hard_min_force_z);
   clear_treatment_status();
   publish_task_parameter_summary(goal->task_name, 
@@ -205,7 +205,7 @@ bool TaskExecutorNode::load_tree_for_task(const std::string & task_name,
   const std::string & force_mode) {
   double min_force_z = -8.0;
   double max_force_z = -3.0;
-  double hard_min_force_z = -20.0;
+  double hard_min_force_z = -25.0;
   force_band_from_mode(force_mode, min_force_z, max_force_z, hard_min_force_z);
   const auto xml_path = task_xml_path(task_name);
   if (xml_path.empty()) {
@@ -411,9 +411,9 @@ void TaskExecutorNode::force_band_from_mode(const std::string & force_mode,
   double & min_force_z,
   double & max_force_z,
   double & hard_min_force_z) {
-  hard_min_force_z = -20.0;
+  hard_min_force_z = -25.0;
   if (force_mode == "HEAVY") {
-    min_force_z = -15.0;
+    min_force_z = -13.0;
     max_force_z = -8.0;
     return;
   }
