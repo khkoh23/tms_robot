@@ -92,13 +92,22 @@ void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm, dou
   emit logMessage(QString("Treatment time: %1 sec").arg(treatment_duration_sec, 0, 'f', 0));
   emit logMessage(QString("UC4 min distance: %1 mm").arg(min_distance_mm, 0, 'f', 0));
   emit logMessage(QString("Force mode: %1").arg(force_mode));
+  current_goal_handle_.reset();
+  task_active_ = false;
+  cancel_in_progress_ = false;
   auto options = rclcpp_action::Client<ExecuteTask>::SendGoalOptions();
   options.goal_response_callback =
     [this](GoalHandleExecuteTask::SharedPtr handle) {
       current_goal_handle_ = handle;
       if (handle) {
+        task_active_ = true;
+        cancel_in_progress_ = false;
         emit logMessage("Task goal accepted");
-      } else {
+      } 
+      else {
+        task_active_ = false;
+        cancel_in_progress_ = false;
+        current_goal_handle_.reset();
         emit logMessage("Task goal rejected");
       }
     };
@@ -127,16 +136,54 @@ void RosBridge::startTask(const QString & task_name, double tcp_offset_z_mm, dou
           emit logMessage("Task finished: UNKNOWN");
           break;
       }
+      task_active_ = false;
+      cancel_in_progress_ = false;
+      current_goal_handle_.reset();
     };
   action_client_->async_send_goal(goal, options);
 }
 
 void RosBridge::cancelTask() {
-  if (current_goal_handle_) {
-    action_client_->async_cancel_goal(current_goal_handle_);
+  if (!current_goal_handle_ || !task_active_) {
+    emit logMessage("No active task to cancel");
+    return;
+  }
+  if (cancel_in_progress_) {
+    emit logMessage("Cancel already requested");
+    return;
+  }
+  try {
+    cancel_in_progress_ = true;
+    action_client_->async_cancel_goal(
+      current_goal_handle_, 
+      [this](rclcpp_action::Client<ExecuteTask>::CancelResponse::SharedPtr response) {
+      if (!response) {
+        emit logMessage("Cancel response not received");
+        cancel_in_progress_ = false;
+        return;
+      }
+      if (response->return_code == action_msgs::srv::CancelGoal::Response::ERROR_NONE) {
+        emit logMessage("Cancel accepted by action server"); 
+      } 
+      else { 
+        emit logMessage(QString("Cancel request returned code: %1").arg(response->return_code));
+        cancel_in_progress_ = false; 
+      } 
+    });
     emit logMessage("Cancel requested");
-  } 
-  else {
-    emit logMessage("No active goal handle to cancel");
+  }
+  catch (const rclcpp_action::exceptions::UnknownGoalHandleError & e) {
+    RCLCPP_WARN(node_->get_logger(), "Cancel ignored because goal handle is unknown/stale: %s", e.what());
+    emit logMessage("No active task to cancel");
+    task_active_ = false;
+    cancel_in_progress_ = false;
+    current_goal_handle_.reset();
+  }
+  catch (const std::exception & e) {
+    RCLCPP_ERROR(node_->get_logger(), "Cancel request failed: %s", e.what());
+    emit logMessage("Cancel request failed");
+    task_active_ = false;
+    cancel_in_progress_ = false;
+    current_goal_handle_.reset();
   }
 }
