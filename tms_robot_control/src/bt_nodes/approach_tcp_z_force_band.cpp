@@ -15,7 +15,7 @@ BT::PortsList ApproachTcpZForceBandNode::providedPorts() {
     BT::InputPort<std::string>("tcp_link", std::string("ur10e_tcp"), "TCP/end-effector link to move"),
     BT::InputPort<double>("min_force_z", -8.0, "Lower force band bound in N"), 
     BT::InputPort<double>("max_force_z", -3.0, "Upper force band bound in N"), 
-    BT::InputPort<double>("hard_min_force_z", -20.0, "Hard minimum force safety limit in N"),
+    BT::InputPort<double>("hard_min_force_z", -25.0, "Hard minimum force safety limit in N"),
     BT::InputPort<double>("step_distance", 0.0005, "TCP Z step distance in meters"), 
     BT::InputPort<double>("max_total_advance", 0.050, "Maximum accumulated absolute TCP Z travel in meters"),
     BT::InputPort<double>("force_freshness_sec", 0.20, "Maximum allowed age of force sample in seconds"),
